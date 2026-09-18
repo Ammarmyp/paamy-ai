@@ -1,3 +1,4 @@
+@layer theme, base, clerk, components, utilities;
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -170,4 +171,17 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Auth panel grid — token-only strokes */
+.auth-grid {
+  background-image:
+    linear-gradient(to right, var(--border-default) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-default) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  mask-image: radial-gradient(
+    ellipse at center,
+    var(--text-primary) 20%,
+    transparent 75%
+  );
 }
