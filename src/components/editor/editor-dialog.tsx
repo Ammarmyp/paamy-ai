@@ -43,7 +43,7 @@ export function EditorDialog({
       <DialogContent
         showCloseButton={showCloseButton}
         className={cn(
-          "max-w-md gap-4 rounded-3xl border border-surface-border bg-elevated p-6 text-copy-primary shadow-none ring-0 sm:max-w-md",
+          "max-w-md gap-4 rounded-3xl border border-surface-border bg-elevated p-6 text-copy-primary shadow-none ring-0 sm:max-w-md [&_input]:text-copy-primary [&_input]:caret-copy-primary [&_input]:placeholder:text-copy-muted",
           className
         )}
       >

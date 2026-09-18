@@ -75,6 +75,7 @@
   shadcn semantic variables map onto these — no light :root palette.
 */
 :root {
+  color-scheme: dark;
   --bg-base: #080809;
   --bg-surface: #111114;
   --bg-elevated: #18181c;
@@ -170,6 +171,7 @@
   }
   html {
     @apply font-sans;
+    color-scheme: dark;
   }
 }
 
