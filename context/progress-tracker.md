@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Wire editor home to project API — complete
+- Share dialog (`09-share-dialog`) — complete
 
 ## Current Goal
 
-- Auth, editor chrome, project dialogs, Prisma models, project API, and editor-home wiring are in place. Next: canvas / workspace features.
+- Auth, editor chrome, project API, workspace shell, and share/collaborator management are in place. Next: real canvas / Liveblocks / AI chat.
 
 ## Completed
 
@@ -54,6 +54,20 @@ Update this file whenever the current phase, active feature, or implementation s
   - Project id and Liveblocks room id stay aligned (create sends room id as project `id`)
   - Mock project list / `use-project-dialogs` removed
 - Editor home follow-ups: empty-slug room ID fallback (`project-{suffix}`); mutation errors surfaced in `EditorDialog`; sidebar project names link to `/editor/[projectId]`
+- `context/feature-specs/08-editor-workspace-shell.md`
+  - `/editor/[roomId]` server page: unauthenticated → `/sign-in`; missing/unauthorized → `AccessDenied`
+  - `src/components/editor/access-denied.tsx` — centered lock icon, message, link back to `/editor`
+  - `src/lib/project-access.ts` — `getClerkIdentity`, `userHasProjectAccess`, `getAccessibleProject` (owner or collaborator by email)
+  - Editor layout uses `getClerkIdentity` for sidebar project lists
+  - Workspace chrome: navbar project name + share + AI sidebar toggle; `ProjectSidebar` highlights `activeRoomId`; canvas placeholder; right AI sidebar placeholder (no Liveblocks / chat / share behavior yet)
+  - `pnpm run build` passes
+- `context/feature-specs/09-share-dialog.md`
+  - Navbar Share opens `ShareProjectDialog` on the active workspace
+  - `GET` / `POST` / `DELETE` `/api/projects/[projectId]/collaborators` — list for members; invite/remove owner-only (`403` otherwise)
+  - `src/lib/collaborators.ts` + `src/lib/clerk-users.ts` — DB helpers; Clerk Backend enrichment for name/avatar with email-only fallback (no local user table)
+  - Owners: invite by email, list, remove, copy project link with temporary `Copied!` feedback
+  - Collaborators: read-only collaborator list
+  - `pnpm run build` passes
 
 ## In Progress
 
@@ -61,7 +75,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Canvas / project workspace features
+- Real canvas / Liveblocks / AI chat
 
 ## Open Questions
 
