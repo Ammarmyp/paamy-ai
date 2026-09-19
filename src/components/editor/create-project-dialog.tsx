@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input"
 interface CreateProjectDialogProps {
   open: boolean
   name: string
-  slug: string
+  roomId: string
   isLoading: boolean
+  error?: string | null
   onNameChange: (value: string) => void
   onOpenChange: (open: boolean) => void
   onCancel: () => void
@@ -20,8 +21,9 @@ interface CreateProjectDialogProps {
 export function CreateProjectDialog({
   open,
   name,
-  slug,
+  roomId,
   isLoading,
+  error,
   onNameChange,
   onOpenChange,
   onCancel,
@@ -32,14 +34,15 @@ export function CreateProjectDialog({
     onSubmit()
   }
 
-  const canSubmit = name.trim().length > 0 && slug.length > 0 && !isLoading
+  const canSubmit = name.trim().length > 0 && roomId.length > 0 && !isLoading
 
   return (
     <EditorDialog
       open={open}
       onOpenChange={onOpenChange}
       title="Create Project"
-      description="Give your project a name. The slug updates as you type."
+      description="Give your project a name. The room ID updates as you type."
+      error={error}
       footer={
         <>
           <Button
@@ -75,8 +78,8 @@ export function CreateProjectDialog({
           onChange={(event) => onNameChange(event.target.value)}
         />
         <p className="text-xs text-copy-muted">
-          Slug preview:{" "}
-          <span className="font-mono text-copy-primary">{slug || "—"}</span>
+          Room ID preview:{" "}
+          <span className="font-mono text-copy-primary">{roomId || "—"}</span>
         </p>
       </form>
     </EditorDialog>
