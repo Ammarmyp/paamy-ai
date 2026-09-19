@@ -16,9 +16,9 @@
 
 - `app/api` — Authenticated request handlers: input validation, ownership checks, task triggering, and persistence.
 - `trigger` — Long-running background jobs: AI design generation and spec generation.
-- `lib` — Shared infrastructure: Prisma client, access control helpers, and utilities.
+- `lib` — Shared infrastructure: Prisma client re-export, access control helpers, and utilities.
 - `components` — UI composition: canvas surfaces, sidebars, dialogs, and interactive elements.
-- `prisma` — Database schema and generated client output.
+- `src/prisma` — Prisma 8 data contract (`contract.prisma`), emitted artefacts, and runtime `db.ts`.
 - `data` — Legacy local directory. Not used for new artifacts.
 
 ## Storage Model
