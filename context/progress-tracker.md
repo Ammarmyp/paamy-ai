@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Share dialog (`09-share-dialog`) — complete
+- Shape panel (`12-shape-panel`) — complete
 
 ## Current Goal
 
-- Auth, editor chrome, project API, workspace shell, and share/collaborator management are in place. Next: real canvas / Liveblocks / AI chat.
+- Users can drag shapes onto the collaborative canvas. Next: shape-specific node visuals, canvas controls, persistence, and AI chat.
 
 ## Completed
 
@@ -68,6 +68,26 @@ Update this file whenever the current phase, active feature, or implementation s
   - Owners: invite by email, list, remove, copy project link with temporary `Copied!` feedback
   - Collaborators: read-only collaborator list
   - `pnpm run build` passes
+- `context/feature-specs/10-liveblocks-setup.md`
+  - `liveblocks.config.ts` — Presence (`cursor`, `isThinking`) and UserMeta (`id`, `name`, `avatar`, `color`)
+  - `src/lib/liveblocks.ts` — cached `@liveblocks/node` client; `getCursorColor` maps user ID → fixed palette
+  - `POST /api/liveblocks-auth` — Clerk auth, `userHasProjectAccess` (project ID = room ID), `getOrCreateRoom`, session token with name/avatar/color; `403` when unauthorized
+  - `@liveblocks/node` added (server SDK for auth client)
+  - `pnpm run build` passes
+- `context/feature-specs/11-base-canvas.md`
+  - `/editor/[roomId]` stays a server page; `EditorWorkspace` mounts the client canvas stack
+  - `src/components/editor/canvas-room.tsx` — `LiveblocksProvider` (`/api/liveblocks-auth`), `RoomProvider` (room ID + `cursor: null` presence), `ClientSideSuspense`, connection error fallback
+  - `src/components/editor/collaborative-canvas.tsx` — `useLiveblocksFlow` (suspense, empty nodes/edges) → `ReactFlow` with loose connections, `fitView`, `MiniMap`, dot `Background`
+  - `src/types/canvas.ts` — `CanvasNodeData` (label/color/shape), `canvasNode` / `canvasEdge` types, `NODE_COLORS`, `NODE_SHAPES`
+  - No controls, custom node/edge renderers, persistence, or AI yet
+  - `pnpm run build` passes
+- `context/feature-specs/12-shape-panel.md`
+  - `src/components/editor/shape-panel.tsx` — floating bottom-center pill toolbar; draggable icons for rectangle, diamond, circle, pill, cylinder, hexagon
+  - Drag payload (`SHAPE_DRAG_MIME`) includes shape + default size (`SHAPE_DEFAULT_SIZES` in `types/canvas.ts`)
+  - Canvas wrapper `dragover` / `drop` → `screenToFlowPosition` → `onNodesChange` add with empty label, default color, dragged shape
+  - Node IDs: `{shape}-{timestamp}-{counter}`
+  - `src/components/editor/canvas-node.tsx` — basic bordered rectangle renderer for `canvasNode` (shape-specific visuals later)
+  - `pnpm run build` passes
 
 ## In Progress
 
@@ -75,7 +95,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Real canvas / Liveblocks / AI chat
+- Shape-specific node visuals, canvas controls, persistence, AI chat
 
 ## Open Questions
 
@@ -92,6 +112,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - Project create may supply a slug+suffix `id` so the project id doubles as the Liveblocks room id
 - Prisma 8 (not Prisma 7 `@prisma/client` / Accelerate): models live in `src/prisma/contract.prisma`; runtime is `src/prisma/db.ts`; app code imports the cached instance from `src/lib/prisma.ts`
 - First schema change uses `migration plan` + `db migrate`, not `db update`
+- Liveblocks auth uses access-token sessions (`prepareSession`); room ID equals project ID; rooms are created on demand via `getOrCreateRoom`
+- Canvas shape creation uses HTML5 drag-and-drop into the React Flow wrapper; new nodes are added via Liveblocks `onNodesChange` `{ type: "add" }` so they sync across clients
 
 ## Session Notes
 
@@ -99,3 +121,4 @@ Update this file whenever the current phase, active feature, or implementation s
 - With `src/app`, Next.js expects `proxy.ts` beside `app` (`src/proxy.ts`), not repo-root `middleware.ts`
 - Do not edit emitted `src/prisma/contract.json` / `contract.d.ts`; edit `contract.prisma` then `pnpm prisma contract emit`
 - Prisma 8 `db.ts` is a process-lifetime singleton; `db.close()` is for scripts, not request handlers
+- Liveblocks requires `LIVEBLOCKS_SECRET_KEY` in `.env` for `/api/liveblocks-auth`
