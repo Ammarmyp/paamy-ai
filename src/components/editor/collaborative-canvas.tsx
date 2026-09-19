@@ -5,17 +5,22 @@ import {
   Background,
   BackgroundVariant,
   ConnectionMode,
-  MiniMap,
+  MarkerType,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  type DefaultEdgeOptions,
+  type EdgeTypes,
   type NodeTypes,
 } from "@xyflow/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
 
+import { CanvasControls } from "@/components/editor/canvas-controls"
+import { CanvasEdgeComponent } from "@/components/editor/canvas-edge"
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
 import { ShapePanel } from "@/components/editor/shape-panel"
 import {
+  DEFAULT_EDGE_COLOR,
   DEFAULT_NODE_COLOR,
   NODE_SHAPES,
   SHAPE_DRAG_MIME,
@@ -29,6 +34,28 @@ import "@xyflow/react/dist/style.css"
 
 const nodeTypes: NodeTypes = {
   canvasNode: CanvasNodeComponent,
+}
+
+const edgeTypes: EdgeTypes = {
+  canvasEdge: CanvasEdgeComponent,
+}
+
+const defaultEdgeOptions: DefaultEdgeOptions = {
+  type: "canvasEdge",
+  data: {
+    label: "",
+  },
+  style: {
+    stroke: DEFAULT_EDGE_COLOR,
+    strokeWidth: 1.25,
+    strokeLinecap: "round",
+  },
+  markerEnd: {
+    type: MarkerType.ArrowClosed,
+    width: 14,
+    height: 14,
+    color: DEFAULT_EDGE_COLOR,
+  },
 }
 
 let nodeIdCounter = 0
@@ -121,6 +148,19 @@ function CollaborativeCanvasInner() {
     [onNodesChange, screenToFlowPosition],
   )
 
+  const canvasEdges = edges.map((edge) =>
+    edge.type === "canvasEdge"
+      ? edge
+      : {
+          ...edge,
+          type: "canvasEdge" as const,
+          data: {
+            label: "",
+            ...edge.data,
+          },
+        },
+  )
+
   return (
     <div
       className="relative h-full min-h-0 w-full flex-1"
@@ -129,12 +169,14 @@ function CollaborativeCanvasInner() {
     >
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={canvasEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onDelete={onDelete}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        defaultEdgeOptions={defaultEdgeOptions}
         connectionMode={ConnectionMode.Loose}
         fitView
         className="bg-base"
@@ -145,14 +187,8 @@ function CollaborativeCanvasInner() {
           size={1}
           color="var(--border-default)"
         />
-        <MiniMap
-          bgColor="var(--bg-surface)"
-          maskColor="color-mix(in srgb, var(--bg-base) 70%, transparent)"
-          nodeColor="var(--bg-elevated)"
-          pannable
-          zoomable
-        />
       </ReactFlow>
+      <CanvasControls />
       <ShapePanel />
     </div>
   )

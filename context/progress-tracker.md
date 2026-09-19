@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Shape panel (`12-shape-panel`) — complete
+- Canvas ergonomics (`17-canvas-ergonomics`) — complete
 
 ## Current Goal
 
-- Users can drag shapes onto the collaborative canvas. Next: shape-specific node visuals, canvas controls, persistence, and AI chat.
+- Floating zoom / undo-redo controls with keyboard shortcuts. Next: persistence and AI chat.
 
 ## Completed
 
@@ -88,6 +88,33 @@ Update this file whenever the current phase, active feature, or implementation s
   - Node IDs: `{shape}-{timestamp}-{counter}`
   - `src/components/editor/canvas-node.tsx` — basic bordered rectangle renderer for `canvasNode` (shape-specific visuals later)
   - `pnpm run build` passes
+- `context/feature-specs/13-node-shape.md`
+  - `src/components/editor/node-shape-visual.tsx` — shared renderer: CSS for rectangle/pill/circle; SVG for diamond/hexagon/cylinder (scales with node size); subtle border at rest, brighter when selected
+  - `src/components/editor/canvas-node.tsx` — uses `NodeShapeVisual` with Liveblocks/React Flow node data + selection
+  - `src/components/editor/shape-panel.tsx` — ghost drag preview follows cursor at default size; clears on drop/cancel; drop creation unchanged
+  - `pnpm run build` passes
+- `context/feature-specs/14-node-editing.md`
+  - `src/components/editor/canvas-node.tsx` — `NodeResizer` on selected nodes (min 48×48, dark subtle handles/lines); double-click label opens centered textarea; empty-state placeholder; live `updateNodeData` as user types; blur / Escape closes; `nodrag` / `nopan` while editing
+  - Shape rendering, shape panel, and drop creation left unchanged
+  - Follow-up: four-side white connection handles (hover/selected); curved bezier edges with arrow via `defaultEdgeOptions`; brighter selected border (`--text-primary`)
+  - `pnpm run build` passes
+- `context/feature-specs/15-nodes-color-toolbar.md`
+  - `src/components/editor/node-color-toolbar.tsx` — floating toolbar above selected nodes; one swatch per `NODE_COLORS` pair; active ring; hover glow from paired text color; `nodrag` / `nopan`
+  - `src/components/editor/canvas-node.tsx` — shows toolbar when selected; swatch sets `data.color` via `updateNodeData` (fill + paired text via palette lookup)
+  - Reused existing `NODE_COLORS` in `types/canvas.ts`; no server calls
+  - `CanvasEdge` typed as `"default"` to match bezier `defaultEdgeOptions` (fixes prior type error)
+  - `pnpm run build` passes
+- `context/feature-specs/16-edge-behavior.md`
+  - Four-side connection handles on nodes: small white dots with dark border; hidden until node hover (also visible when selected)
+  - `src/components/editor/canvas-edge.tsx` — custom `canvasEdge` renderer: smooth-step right-angle path, dimmed at rest, brightens on hover/selection, wide invisible hit target, closed arrow via `defaultEdgeOptions`
+  - Inline edge labels via `EdgeLabelRenderer` + `getSmoothStepPath` midpoint; growing input; save on blur / Enter / Escape; pill badges; faint “Add label” hint on active unlabeled edges; `nodrag` / `nopan`; `updateEdgeData` for collaborative sync
+  - `CanvasEdge` / `CanvasEdgeData` types; new connections default to `canvasEdge`
+  - `pnpm run build` passes
+- `context/feature-specs/17-canvas-ergonomics.md`
+  - `src/components/editor/canvas-controls.tsx` — bottom-left pill bar: zoom out / fit view / zoom in + undo / redo (divider between groups); React Flow zoom with short animation; Liveblocks `useUndo` / `useRedo` / `useCanUndo` / `useCanRedo`; disabled history buttons dimmed
+  - `src/hooks/useKeyboardShortcuts.ts` — window listeners for `+`/`=` zoom in, `-` zoom out, Cmd/Ctrl+Z undo, Cmd/Ctrl+Shift+Z and Cmd/Ctrl+Y redo; skips inputs / textareas / contenteditable
+  - MiniMap removed from collaborative canvas
+  - `pnpm run build` passes
 
 ## In Progress
 
@@ -95,7 +122,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Shape-specific node visuals, canvas controls, persistence, AI chat
+- Persistence and AI chat
 
 ## Open Questions
 
