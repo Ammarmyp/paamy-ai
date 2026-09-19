@@ -14,6 +14,7 @@ interface ProjectSidebarProps {
   onClose: () => void
   ownedProjects: ProjectListItem[]
   sharedProjects: ProjectListItem[]
+  activeRoomId?: string | null
   onCreateProject: () => void
   onRenameProject: (project: ProjectListItem) => void
   onDeleteProject: (project: ProjectListItem) => void
@@ -25,6 +26,7 @@ export function ProjectSidebar({
   onClose,
   ownedProjects,
   sharedProjects,
+  activeRoomId = null,
   onCreateProject,
   onRenameProject,
   onDeleteProject,
@@ -77,6 +79,7 @@ export function ProjectSidebar({
               {ownedProjects.length > 0 ? (
                 <ProjectList
                   projects={ownedProjects}
+                  activeRoomId={activeRoomId}
                   onRenameProject={onRenameProject}
                   onDeleteProject={onDeleteProject}
                 />
@@ -91,6 +94,7 @@ export function ProjectSidebar({
               {sharedProjects.length > 0 ? (
                 <ProjectList
                   projects={sharedProjects}
+                  activeRoomId={activeRoomId}
                   onRenameProject={onRenameProject}
                   onDeleteProject={onDeleteProject}
                 />
@@ -114,51 +118,65 @@ export function ProjectSidebar({
 
 interface ProjectListProps {
   projects: ProjectListItem[]
+  activeRoomId: string | null
   onRenameProject: (project: ProjectListItem) => void
   onDeleteProject: (project: ProjectListItem) => void
 }
 
 function ProjectList({
   projects,
+  activeRoomId,
   onRenameProject,
   onDeleteProject,
 }: ProjectListProps) {
   return (
     <ul className="flex flex-col gap-1 pb-3">
-      {projects.map((project) => (
-        <li key={project.id}>
-          <div className="flex items-center gap-1 rounded-xl px-2 py-1.5 hover:bg-subtle">
-            <Link
-              href={`/editor/${project.id}`}
-              className="min-w-0 flex-1 truncate text-sm text-copy-primary"
+      {projects.map((project) => {
+        const isActive = activeRoomId === project.id
+        return (
+          <li key={project.id}>
+            <div
+              className={cn(
+                "flex items-center gap-1 rounded-xl px-2 py-1.5 hover:bg-subtle",
+                isActive && "bg-accent-dim",
+              )}
             >
-              {project.name}
-            </Link>
-            {project.owned ? (
-              <div className="flex shrink-0">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Rename ${project.name}`}
-                  onClick={() => onRenameProject(project)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Delete ${project.name}`}
-                  onClick={() => onDeleteProject(project)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        </li>
-      ))}
+              <Link
+                href={`/editor/${project.id}`}
+                className={cn(
+                  "min-w-0 flex-1 truncate text-sm text-copy-primary",
+                  isActive && "text-brand",
+                )}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {project.name}
+              </Link>
+              {project.owned ? (
+                <div className="flex shrink-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Rename ${project.name}`}
+                    onClick={() => onRenameProject(project)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Delete ${project.name}`}
+                    onClick={() => onDeleteProject(project)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          </li>
+        )
+      })}
     </ul>
   )
 }
