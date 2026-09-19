@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Project dialogs and editor home — complete
+- Prisma project data models — complete
 
 ## Current Goal
 
-- Auth, editor chrome, and project dialogs are in place; ready for canvas / project workspace features.
+- Auth, editor chrome, project dialogs, and Prisma 8 `Project` / `ProjectCollaborator` persistence are in place. Next: canvas / project workspace features.
 
 ## Completed
 
@@ -31,6 +31,17 @@ Update this file whenever the current phase, active feature, or implementation s
   - Sidebar lists mock owned/shared projects; rename/delete actions on owned items only; sidebar New Project opens Create
   - Mobile sidebar backdrop scrim closes on outside tap (`md:hidden`)
   - `pnpm exec tsc --noEmit` and `pnpm lint` pass
+- Prisma 8 ORM init (Postgres) after a failed `pnpm add` during `orm init`
+  - Installed `@prisma/orm-postgres`, `dotenv`, `prisma@8.0.0-rc.15`, `@prisma/cli-engine`
+  - Contract path in `prisma.config.ts` is `./src/prisma/contract.prisma`
+  - `pnpm prisma contract emit` writes `src/prisma/contract.json` and `src/prisma/contract.d.ts`
+- `context/feature-specs/05-prisma.md` — rewritten from Prisma 7 (`schema.prisma` / Accelerate / `@prisma/adapter-pg`) to the Prisma 8 contract, `postgres()` singleton, and `migration plan` / `db migrate` flow
+  - Replaced starter `User`/`Post` with `Project` and `ProjectCollaborator` in `src/prisma/contract.prisma` (Prisma 8 contract; not Prisma 7 `prisma/models/`)
+  - `Project`: Clerk `ownerId`, name, optional description, `ProjectStatus` (`DRAFT` | `ARCHIVED`, default `DRAFT`), optional `canvasJsonPath`, timestamps; indexes on `ownerId` and `createdAt`
+  - `ProjectCollaborator`: project FK with `onDelete: Cascade`, email, `createdAt`; unique `(projectId, email)`; indexes on email and `(projectId, createdAt)`
+  - Cached singleton in `src/prisma/db.ts` (`postgres()` factory, `globalThis` cache in development); `src/lib/prisma.ts` re-exports it as `prisma`
+  - First migration `migrations/app/20260918T1128_init_projects` planned and applied; `db` ref advanced
+  - `prebuild` runs `prisma contract emit`; `pnpm run build` passes
 
 ## In Progress
 
@@ -38,7 +49,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Canvas / project workspace features beyond editor chrome, auth, and project dialogs
+- Canvas / project workspace features beyond editor chrome, auth, project dialogs, and Prisma models
 
 ## Open Questions
 
@@ -52,8 +63,12 @@ Update this file whenever the current phase, active feature, or implementation s
 - Auth: protected-first via `src/proxy.ts` (`clerkMiddleware`); public routes from Clerk sign-in/sign-up env vars; Clerk `dark` theme with monochromatic CSS-variable appearance (no hardcoded colors)
 - Auth layout: 50/50 on large screens; left panel uses brand → headline → supporting → features hierarchy; right panel uses token-based grid/map backdrop + bordered form card with Sign In / Sign Up tabs
 - Project create/rename/delete are UI-only against in-memory mock data; no API or persistence yet
+- Prisma 8 (not Prisma 7 `@prisma/client` / Accelerate): models live in `src/prisma/contract.prisma`; runtime is `src/prisma/db.ts`; app code imports the cached instance from `src/lib/prisma.ts`
+- First schema change uses `migration plan` + `db migrate`, not `db update`
 
 ## Session Notes
 
 - Do not edit generated `src/components/ui/*` — they import `cn` from the `cn` package; app code should use `@/lib/utils`
 - With `src/app`, Next.js expects `proxy.ts` beside `app` (`src/proxy.ts`), not repo-root `middleware.ts`
+- Do not edit emitted `src/prisma/contract.json` / `contract.d.ts`; edit `contract.prisma` then `pnpm prisma contract emit`
+- Prisma 8 `db.ts` is a process-lifetime singleton; `db.close()` is for scripts, not request handlers
