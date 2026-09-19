@@ -43,6 +43,7 @@ export function EditorShell({
     name,
     roomId,
     isLoading,
+    error,
     setName,
     openCreate,
     openRename,
@@ -76,6 +77,7 @@ export function EditorShell({
           name={name}
           roomId={roomId}
           isLoading={isLoading}
+          error={error}
           onNameChange={setName}
           onOpenChange={handleDialogOpenChange}
           onCancel={closeDialog}
@@ -88,6 +90,7 @@ export function EditorShell({
           currentName={selectedProject?.name ?? ""}
           name={name}
           isLoading={isLoading}
+          error={error}
           onNameChange={setName}
           onOpenChange={handleDialogOpenChange}
           onCancel={closeDialog}
@@ -99,6 +102,7 @@ export function EditorShell({
           open={dialog === "delete"}
           projectName={selectedProject?.name ?? ""}
           isLoading={isLoading}
+          error={error}
           onOpenChange={handleDialogOpenChange}
           onCancel={closeDialog}
           onConfirm={() => {

@@ -8,6 +8,8 @@ import { slugify } from "@/lib/slug"
 
 export type ProjectDialog = "create" | "rename" | "delete"
 
+const EMPTY_SLUG_PREFIX = "project"
+
 function createShortSuffix(): string {
   return Math.random().toString(36).slice(2, 8)
 }
@@ -15,6 +17,23 @@ function createShortSuffix(): string {
 function getActiveProjectId(pathname: string): string | null {
   const match = pathname.match(/^\/editor\/([^/]+)$/)
   return match?.[1] ?? null
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+async function readMutationError(response: Response): Promise<string> {
+  try {
+    const data: unknown = await response.json()
+    if (isRecord(data) && typeof data.error === "string" && data.error.length > 0) {
+      return data.error
+    }
+  } catch {
+    // Fall through to the generic message when the body is not JSON.
+  }
+
+  return "Something went wrong. Please try again."
 }
 
 export function useProjectActions() {
@@ -26,24 +45,32 @@ export function useProjectActions() {
   const [selectedProject, setSelectedProject] = useState<ProjectListItem | null>(
     null,
   )
-  const [name, setName] = useState("")
+  const [name, setNameState] = useState("")
   const [createSuffix, setCreateSuffix] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const slug = useMemo(() => slugify(name), [name])
   const roomId = useMemo(() => {
-    if (!slug || !createSuffix) {
+    if (!createSuffix) {
       return ""
     }
-    return `${slug}-${createSuffix}`
+    const prefix = slug || EMPTY_SLUG_PREFIX
+    return `${prefix}-${createSuffix}`
   }, [createSuffix, slug])
+
+  const setName = useCallback((value: string) => {
+    setError(null)
+    setNameState(value)
+  }, [])
 
   const closeDialog = useCallback(() => {
     setDialog(null)
     setSelectedProject(null)
-    setName("")
+    setNameState("")
     setCreateSuffix("")
     setIsLoading(false)
+    setError(null)
   }, [])
 
   const handleDialogOpenChange = useCallback(
@@ -57,19 +84,22 @@ export function useProjectActions() {
 
   const openCreate = useCallback(() => {
     setSelectedProject(null)
-    setName("")
+    setNameState("")
     setCreateSuffix(createShortSuffix())
+    setError(null)
     setDialog("create")
   }, [])
 
   const openRename = useCallback((project: ProjectListItem) => {
     setSelectedProject(project)
-    setName(project.name)
+    setNameState(project.name)
+    setError(null)
     setDialog("rename")
   }, [])
 
   const openDelete = useCallback((project: ProjectListItem) => {
     setSelectedProject(project)
+    setError(null)
     setDialog("delete")
   }, [])
 
@@ -79,6 +109,7 @@ export function useProjectActions() {
       return
     }
 
+    setError(null)
     setIsLoading(true)
     try {
       const response = await fetch("/api/projects", {
@@ -88,16 +119,26 @@ export function useProjectActions() {
       })
 
       if (!response.ok) {
+        setError(await readMutationError(response))
         setIsLoading(false)
         return
       }
 
-      const data = (await response.json()) as { project?: { id?: string } }
+      let data: { project?: { id?: string } }
+      try {
+        data = (await response.json()) as { project?: { id?: string } }
+      } catch {
+        setError("Something went wrong. Please try again.")
+        setIsLoading(false)
+        return
+      }
+
       const projectId = data.project?.id ?? roomId
       closeDialog()
       router.push(`/editor/${projectId}`)
       router.refresh()
     } catch {
+      setError("Network error. Please try again.")
       setIsLoading(false)
     }
   }, [closeDialog, isLoading, name, roomId, router])
@@ -108,6 +149,7 @@ export function useProjectActions() {
       return
     }
 
+    setError(null)
     setIsLoading(true)
     try {
       const response = await fetch(`/api/projects/${selectedProject.id}`, {
@@ -117,6 +159,7 @@ export function useProjectActions() {
       })
 
       if (!response.ok) {
+        setError(await readMutationError(response))
         setIsLoading(false)
         return
       }
@@ -124,6 +167,7 @@ export function useProjectActions() {
       closeDialog()
       router.refresh()
     } catch {
+      setError("Network error. Please try again.")
       setIsLoading(false)
     }
   }, [closeDialog, isLoading, name, router, selectedProject])
@@ -134,6 +178,7 @@ export function useProjectActions() {
     }
 
     const deletedId = selectedProject.id
+    setError(null)
     setIsLoading(true)
     try {
       const response = await fetch(`/api/projects/${deletedId}`, {
@@ -141,6 +186,7 @@ export function useProjectActions() {
       })
 
       if (!response.ok) {
+        setError(await readMutationError(response))
         setIsLoading(false)
         return
       }
@@ -151,6 +197,7 @@ export function useProjectActions() {
       }
       router.refresh()
     } catch {
+      setError("Network error. Please try again.")
       setIsLoading(false)
     }
   }, [activeProjectId, closeDialog, isLoading, router, selectedProject])
@@ -162,6 +209,7 @@ export function useProjectActions() {
     slug,
     roomId,
     isLoading,
+    error,
     setName,
     openCreate,
     openRename,

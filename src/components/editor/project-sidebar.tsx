@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Pencil, Plus, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -127,9 +128,12 @@ function ProjectList({
       {projects.map((project) => (
         <li key={project.id}>
           <div className="flex items-center gap-1 rounded-xl px-2 py-1.5 hover:bg-subtle">
-            <span className="min-w-0 flex-1 truncate text-sm text-copy-primary">
+            <Link
+              href={`/editor/${project.id}`}
+              className="min-w-0 flex-1 truncate text-sm text-copy-primary"
+            >
               {project.name}
-            </span>
+            </Link>
             {project.owned ? (
               <div className="flex shrink-0">
                 <Button

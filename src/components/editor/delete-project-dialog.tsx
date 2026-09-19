@@ -7,6 +7,7 @@ interface DeleteProjectDialogProps {
   open: boolean
   projectName: string
   isLoading: boolean
+  error?: string | null
   onOpenChange: (open: boolean) => void
   onCancel: () => void
   onConfirm: () => void
@@ -16,6 +17,7 @@ export function DeleteProjectDialog({
   open,
   projectName,
   isLoading,
+  error,
   onOpenChange,
   onCancel,
   onConfirm,
@@ -26,6 +28,7 @@ export function DeleteProjectDialog({
       onOpenChange={onOpenChange}
       title="Delete Project"
       description={`Are you sure you want to delete “${projectName}”? This cannot be undone.`}
+      error={error}
       footer={
         <>
           <Button

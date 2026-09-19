@@ -53,6 +53,7 @@ Update this file whenever the current phase, active feature, or implementation s
   - Create dialog shows room ID preview; rename pre-fills name; delete shows project name
   - Project id and Liveblocks room id stay aligned (create sends room id as project `id`)
   - Mock project list / `use-project-dialogs` removed
+- Editor home follow-ups: empty-slug room ID fallback (`project-{suffix}`); mutation errors surfaced in `EditorDialog`; sidebar project names link to `/editor/[projectId]`
 
 ## In Progress
 

@@ -17,6 +17,7 @@ interface EditorDialogProps {
   onOpenChange?: (open: boolean) => void
   title: ReactNode
   description?: ReactNode
+  error?: string | null
   children?: ReactNode
   footer?: ReactNode
   className?: string
@@ -33,6 +34,7 @@ export function EditorDialog({
   onOpenChange,
   title,
   description,
+  error,
   children,
   footer,
   className,
@@ -57,6 +59,12 @@ export function EditorDialog({
         </DialogHeader>
 
         {children}
+
+        {error ? (
+          <p role="alert" className="text-sm text-error">
+            {error}
+          </p>
+        ) : null}
 
         {footer ? (
           <DialogFooter className="rounded-b-3xl border-t border-surface-border bg-subtle/50">

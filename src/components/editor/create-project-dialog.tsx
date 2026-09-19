@@ -11,6 +11,7 @@ interface CreateProjectDialogProps {
   name: string
   roomId: string
   isLoading: boolean
+  error?: string | null
   onNameChange: (value: string) => void
   onOpenChange: (open: boolean) => void
   onCancel: () => void
@@ -22,6 +23,7 @@ export function CreateProjectDialog({
   name,
   roomId,
   isLoading,
+  error,
   onNameChange,
   onOpenChange,
   onCancel,
@@ -40,6 +42,7 @@ export function CreateProjectDialog({
       onOpenChange={onOpenChange}
       title="Create Project"
       description="Give your project a name. The room ID updates as you type."
+      error={error}
       footer={
         <>
           <Button
