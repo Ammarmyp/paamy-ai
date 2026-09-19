@@ -4,18 +4,18 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Prisma project data models — complete
+- Wire editor home to project API — complete
 
 ## Current Goal
 
-- Auth, editor chrome, project dialogs, and Prisma 8 `Project` / `ProjectCollaborator` persistence are in place. Next: canvas / project workspace features.
+- Auth, editor chrome, project dialogs, Prisma models, project API, and editor-home wiring are in place. Next: canvas / workspace features.
 
 ## Completed
 
 - `context/feature-specs/01-design-system.md` — shadcn/ui configured; Button, Card, Dialog, Input, Tabs, Textarea, ScrollArea added; lucide-react installed; `src/lib/utils.ts` `cn()` helper; dark theme tokens in `globals.css` (no light palette); generated `src/components/ui/*` left unmodified after install
 - `context/feature-specs/02-editor.md`
   - `src/components/editor/editor-navbar.tsx` — fixed-height top navbar (left / center / right); `PanelLeftOpen` / `PanelLeftClose` from sidebar state; dark bg + subtle bottom border
-  - `src/components/editor/project-sidebar.tsx` — floating overlay (does not push canvas); slides in from left; `isOpen` prop; Projects header + close; Tabs (My Projects / Shared) with mock owned and shared project lists; full-width New Project + `Plus`
+  - `src/components/editor/project-sidebar.tsx` — floating overlay (does not push canvas); slides in from left; `isOpen` prop; Projects header + close; Tabs (My Projects / Shared) with owned and shared project lists; full-width New Project + `Plus`
   - `src/components/editor/editor-dialog.tsx` — dialog pattern with title / description / footer actions using `globals.css` tokens; no feature dialogs yet
 - `context/feature-specs/03-auth.md`
   - `@clerk/ui` installed; `ClerkProvider` in root layout with Clerk `dark` theme + CSS variable appearance overrides (`src/lib/clerk-appearance.ts`)
@@ -26,11 +26,9 @@ Update this file whenever the current phase, active feature, or implementation s
   - `pnpm run build` passes
 - `context/feature-specs/04-project-dialogs.md`
   - `/editor` home: heading, description, `New Project` + `Plus` (no cards); opens Create dialog
-  - `src/hooks/use-project-dialogs.ts` — dialog, form, and loading state; in-memory mock list only
-  - Create / Rename / Delete dialogs via existing `EditorDialog` pattern (live slug preview, rename autofocus + Enter, destructive delete confirm)
-  - Sidebar lists mock owned/shared projects; rename/delete actions on owned items only; sidebar New Project opens Create
+  - Create / Rename / Delete dialogs via existing `EditorDialog` pattern (live room ID preview, rename autofocus + Enter, destructive delete confirm)
+  - Sidebar rename/delete actions on owned items only; sidebar New Project opens Create
   - Mobile sidebar backdrop scrim closes on outside tap (`md:hidden`)
-  - `pnpm exec tsc --noEmit` and `pnpm lint` pass
 - Prisma 8 ORM init (Postgres) after a failed `pnpm add` during `orm init`
   - Installed `@prisma/orm-postgres`, `dotenv`, `prisma@8.0.0-rc.15`, `@prisma/cli-engine`
   - Contract path in `prisma.config.ts` is `./src/prisma/contract.prisma`
@@ -42,6 +40,19 @@ Update this file whenever the current phase, active feature, or implementation s
   - Cached singleton in `src/prisma/db.ts` (`postgres()` factory, `globalThis` cache in development); `src/lib/prisma.ts` re-exports it as `prisma`
   - First migration `migrations/app/20260918T1128_init_projects` planned and applied; `db` ref advanced
   - `prebuild` runs `prisma contract emit`; `pnpm run build` passes
+- `context/feature-specs/05-project-api.md`
+  - `GET /api/projects` — lists current user’s projects with `page`/`limit` pagination and total count
+  - `POST /api/projects` — creates project; Clerk `ownerId`; missing name defaults to `Untitled Project`; schema UUID id by default; optional client `id` for room-aligned create
+  - `PATCH /api/projects/[projectId]` — rename; owner-only (`403` for non-owner)
+  - `DELETE /api/projects/[projectId]` — delete; owner-only (`403` for non-owner)
+  - Unauthenticated requests return `401` via `src/lib/api-auth.ts`
+  - Shared helpers in `src/lib/projects.ts`
+- `context/feature-specs/05-wire-editor-home.md`
+  - `/editor` layout is a server component: loads owned + shared projects via `loadEditorProjectLists` and passes them into `EditorShell` / sidebar (no client fetch for initial load)
+  - `src/hooks/use-project-actions.ts` — dialog state, name input, create room ID (`slugify(name)` + short suffix), `POST` / `PATCH` / `DELETE` mutations; create navigates to `/editor/[projectId]`; rename refreshes; delete redirects to `/editor` when active workspace is removed, otherwise refreshes
+  - Create dialog shows room ID preview; rename pre-fills name; delete shows project name
+  - Project id and Liveblocks room id stay aligned (create sends room id as project `id`)
+  - Mock project list / `use-project-dialogs` removed
 
 ## In Progress
 
@@ -49,7 +60,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Canvas / project workspace features beyond editor chrome, auth, project dialogs, and Prisma models
+- Canvas / project workspace features
 
 ## Open Questions
 
@@ -62,7 +73,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - Editor sidebars float as overlays (translate in/out); they must not push canvas layout
 - Auth: protected-first via `src/proxy.ts` (`clerkMiddleware`); public routes from Clerk sign-in/sign-up env vars; Clerk `dark` theme with monochromatic CSS-variable appearance (no hardcoded colors)
 - Auth layout: 50/50 on large screens; left panel uses brand → headline → supporting → features hierarchy; right panel uses token-based grid/map backdrop + bordered form card with Sign In / Sign Up tabs
-- Project create/rename/delete are UI-only against in-memory mock data; no API or persistence yet
+- Editor home lists are server-fetched; mutations go through `/api/projects` and `router.refresh()` / navigation — no client cache library for this flow
+- Project create may supply a slug+suffix `id` so the project id doubles as the Liveblocks room id
 - Prisma 8 (not Prisma 7 `@prisma/client` / Accelerate): models live in `src/prisma/contract.prisma`; runtime is `src/prisma/db.ts`; app code imports the cached instance from `src/lib/prisma.ts`
 - First schema change uses `migration plan` + `db migrate`, not `db update`
 

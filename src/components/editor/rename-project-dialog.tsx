@@ -10,7 +10,6 @@ interface RenameProjectDialogProps {
   open: boolean
   currentName: string
   name: string
-  slug: string
   isLoading: boolean
   onNameChange: (value: string) => void
   onOpenChange: (open: boolean) => void
@@ -22,7 +21,6 @@ export function RenameProjectDialog({
   open,
   currentName,
   name,
-  slug,
   isLoading,
   onNameChange,
   onOpenChange,
@@ -46,7 +44,7 @@ export function RenameProjectDialog({
     onSubmit()
   }
 
-  const canSubmit = name.trim().length > 0 && slug.length > 0 && !isLoading
+  const canSubmit = name.trim().length > 0 && !isLoading
 
   return (
     <EditorDialog

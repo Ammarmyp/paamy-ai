@@ -2,13 +2,12 @@
 
 import { Plus } from "lucide-react"
 
+import { useOpenCreateProject } from "@/components/editor/editor-shell"
 import { Button } from "@/components/ui/button"
 
-interface EditorHomeProps {
-  onNewProject: () => void
-}
+export function EditorHome() {
+  const onNewProject = useOpenCreateProject()
 
-export function EditorHome({ onNewProject }: EditorHomeProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
       <h1 className="text-xl font-medium tracking-tight text-copy-primary">
