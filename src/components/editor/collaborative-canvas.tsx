@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, type DragEvent } from "react"
+import { useCallback, type DragEvent, type MouseEvent } from "react"
 import {
   Background,
   BackgroundVariant,
@@ -14,12 +14,14 @@ import {
   type NodeTypes,
 } from "@xyflow/react"
 import { LiveObject } from "@liveblocks/client"
-import { useMutation } from "@liveblocks/react"
+import { useMutation, useUpdateMyPresence } from "@liveblocks/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
 
 import { CanvasControls } from "@/components/editor/canvas-controls"
 import { CanvasEdgeComponent } from "@/components/editor/canvas-edge"
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
+import { LiveCursors } from "@/components/editor/live-cursors"
+import { PresenceAvatars } from "@/components/editor/presence-avatars"
 import { ShapePanel } from "@/components/editor/shape-panel"
 import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal"
 import type { CanvasTemplate } from "@/components/editor/starter-templates"
@@ -176,6 +178,7 @@ export function CollaborativeCanvas() {
 function CollaborativeCanvasInner() {
   const { screenToFlowPosition, fitView } = useReactFlow()
   const { isOpen, setOpen } = useStarterTemplatesUi()
+  const updateMyPresence = useUpdateMyPresence()
 
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
@@ -262,6 +265,21 @@ function CollaborativeCanvasInner() {
     [onNodesChange, screenToFlowPosition],
   )
 
+  const handleMouseMove = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      })
+      updateMyPresence({ cursor: position })
+    },
+    [screenToFlowPosition, updateMyPresence],
+  )
+
+  const handleMouseLeave = useCallback(() => {
+    updateMyPresence({ cursor: null })
+  }, [updateMyPresence])
+
   const handleImportTemplate = useCallback(
     (template: CanvasTemplate) => {
       replaceCanvasWithTemplate(template)
@@ -299,6 +317,8 @@ function CollaborativeCanvasInner() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onDelete={onDelete}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
@@ -313,6 +333,8 @@ function CollaborativeCanvasInner() {
           color="var(--border-default)"
         />
       </ReactFlow>
+      <LiveCursors />
+      <PresenceAvatars />
       <CanvasControls />
       <ShapePanel />
       <StarterTemplatesModal

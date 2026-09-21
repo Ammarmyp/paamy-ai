@@ -4,7 +4,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Starter templates (`18-starter-template`) — complete
+- Presence avatars and live cursors (`19-presence-avatars-cursor`) — complete
 
 ## Current Goal
 
@@ -121,6 +121,21 @@ Update this file whenever the current phase, active feature, or implementation s
   - `src/components/editor/starter-templates-ui.tsx` — shell-level open state for navbar ↔ canvas wiring
   - Navbar `LayoutTemplate` button; import clears via Liveblocks `onDelete` then adds template nodes/edges and fits view
   - `pnpm run build` passes
+- `context/feature-specs/20-ai-sidebar-shell.md`
+  - `src/components/editor/ai-sidebar.tsx` — extracted floating right sidebar; parent still owns open/close; existing slide/position/surface styles preserved
+  - Header: `AI Workspace`, `Collaborate with Ghost AI`, bot icon, close button
+  - Tabs: AI Architect / Specs with accent active styling
+  - Architect: empty state, starter chips, local user messages, auto-resizing textarea, Enter to send
+  - Specs: Generate Spec button + static demo spec card with disabled download
+  - No backend, Liveblocks, or AI generation
+  - `pnpm run build` passes
+- `context/feature-specs/19-presence-avatars-cursor.md`
+  - Presence UI lives in the editor canvas (top-right), not the shared navbar; editor home navbar is unchanged
+  - `src/components/editor/presence-avatars.tsx` — collaborator avatars from Liveblocks presence, filtered by Clerk session user ID; photos with initials fallback; max 5 + overflow chip; divider only when collaborators exist; current user is Clerk `UserButton` (hidden from canvas navbar)
+  - `src/components/editor/live-cursors.tsx` — other participants only; pointer + name badge use presence color
+  - `collaborative-canvas.tsx` broadcasts `cursor` on React Flow `onMouseMove` / `onMouseLeave`
+  - `liveblocks.config.ts` Presence: `cursor` and `thinking`
+  - `pnpm run build` passes
 
 ## In Progress
 
@@ -147,6 +162,7 @@ Update this file whenever the current phase, active feature, or implementation s
 - First schema change uses `migration plan` + `db migrate`, not `db update`
 - Liveblocks auth uses access-token sessions (`prepareSession`); room ID equals project ID; rooms are created on demand via `getOrCreateRoom`
 - Canvas shape creation uses HTML5 drag-and-drop into the React Flow wrapper; new nodes are added via Liveblocks `onNodesChange` `{ type: "add" }` so they sync across clients
+- Presence avatars and live cursors belong to the editor canvas view, not the shared editor-home navbar; current user identity for filtering comes from the Clerk session
 
 ## Session Notes
 

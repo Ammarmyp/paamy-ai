@@ -21,6 +21,7 @@ interface EditorNavbarProps {
   onToggleAiSidebar?: () => void
   onShare?: () => void
   onOpenStarterTemplates?: () => void
+  showUserButton?: boolean
   className?: string
 }
 
@@ -32,6 +33,7 @@ export function EditorNavbar({
   onToggleAiSidebar,
   onShare,
   onOpenStarterTemplates,
+  showUserButton = true,
   className,
 }: EditorNavbarProps) {
   const showWorkspaceActions = Boolean(projectName)
@@ -105,7 +107,7 @@ export function EditorNavbar({
             </Button>
           </>
         ) : null}
-        <UserButton />
+        {showUserButton ? <UserButton /> : null}
       </div>
     </header>
   )
