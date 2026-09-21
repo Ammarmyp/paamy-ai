@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Canvas ergonomics (`17-canvas-ergonomics`) — complete
+- Starter templates (`18-starter-template`) — complete
 
 ## Current Goal
 
-- Floating zoom / undo-redo controls with keyboard shortcuts. Next: persistence and AI chat.
+- Persistence and AI chat.
 
 ## Completed
 
@@ -114,6 +114,12 @@ Update this file whenever the current phase, active feature, or implementation s
   - `src/components/editor/canvas-controls.tsx` — bottom-left pill bar: zoom out / fit view / zoom in + undo / redo (divider between groups); React Flow zoom with short animation; Liveblocks `useUndo` / `useRedo` / `useCanUndo` / `useCanRedo`; disabled history buttons dimmed
   - `src/hooks/useKeyboardShortcuts.ts` — window listeners for `+`/`=` zoom in, `-` zoom out, Cmd/Ctrl+Z undo, Cmd/Ctrl+Shift+Z and Cmd/Ctrl+Y redo; skips inputs / textareas / contenteditable
   - MiniMap removed from collaborative canvas
+  - `pnpm run build` passes
+- `context/feature-specs/18-starter-template.md`
+  - `src/components/editor/starter-templates.ts` — `CanvasTemplate` type + `CANVAS_TEMPLATES` (microservices, CI/CD, project structure, event-driven) using shared canvas types / `NODE_COLORS`
+  - `src/components/editor/starter-templates-modal.tsx` — dialog with scrollable card grid, lightweight shape/edge previews (no React Flow), Import per template
+  - `src/components/editor/starter-templates-ui.tsx` — shell-level open state for navbar ↔ canvas wiring
+  - Navbar `LayoutTemplate` button; import clears via Liveblocks `onDelete` then adds template nodes/edges and fits view
   - `pnpm run build` passes
 
 ## In Progress

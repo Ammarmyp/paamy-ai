@@ -19,6 +19,9 @@ import { CanvasControls } from "@/components/editor/canvas-controls"
 import { CanvasEdgeComponent } from "@/components/editor/canvas-edge"
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
 import { ShapePanel } from "@/components/editor/shape-panel"
+import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal"
+import type { CanvasTemplate } from "@/components/editor/starter-templates"
+import { useStarterTemplatesUi } from "@/components/editor/starter-templates-ui"
 import {
   DEFAULT_EDGE_COLOR,
   DEFAULT_NODE_COLOR,
@@ -58,6 +61,8 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
   },
 }
 
+const FIT_VIEW_DURATION_MS = 200
+
 let nodeIdCounter = 0
 
 function createNodeId(shape: NodeShape) {
@@ -92,7 +97,8 @@ export function CollaborativeCanvas() {
 }
 
 function CollaborativeCanvasInner() {
-  const { screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition, fitView } = useReactFlow()
+  const { isOpen, setOpen } = useStarterTemplatesUi()
 
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
@@ -148,6 +154,44 @@ function CollaborativeCanvasInner() {
     [onNodesChange, screenToFlowPosition],
   )
 
+  const handleImportTemplate = useCallback(
+    (template: CanvasTemplate) => {
+      if (nodes.length > 0 || edges.length > 0) {
+        onDelete({ nodes, edges })
+      }
+
+      if (template.nodes.length > 0) {
+        onNodesChange(
+          template.nodes.map((item) => ({
+            type: "add" as const,
+            item: {
+              ...item,
+              position: { ...item.position },
+              data: { ...item.data },
+            },
+          })),
+        )
+      }
+
+      if (template.edges.length > 0) {
+        onEdgesChange(
+          template.edges.map((item) => ({
+            type: "add" as const,
+            item: {
+              ...item,
+              data: { ...item.data },
+            },
+          })),
+        )
+      }
+
+      window.setTimeout(() => {
+        void fitView({ duration: FIT_VIEW_DURATION_MS, padding: 0.2 })
+      }, 50)
+    },
+    [edges, fitView, nodes, onDelete, onEdgesChange, onNodesChange],
+  )
+
   const canvasEdges = edges.map((edge) =>
     edge.type === "canvasEdge"
       ? edge
@@ -190,6 +234,11 @@ function CollaborativeCanvasInner() {
       </ReactFlow>
       <CanvasControls />
       <ShapePanel />
+      <StarterTemplatesModal
+        open={isOpen}
+        onOpenChange={setOpen}
+        onImport={handleImportTemplate}
+      />
     </div>
   )
 }
