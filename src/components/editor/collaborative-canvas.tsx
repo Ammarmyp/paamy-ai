@@ -13,12 +13,17 @@ import {
   type EdgeTypes,
   type NodeTypes,
 } from "@xyflow/react"
+import { LiveObject } from "@liveblocks/client"
+import { useMutation } from "@liveblocks/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
 
 import { CanvasControls } from "@/components/editor/canvas-controls"
 import { CanvasEdgeComponent } from "@/components/editor/canvas-edge"
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
 import { ShapePanel } from "@/components/editor/shape-panel"
+import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal"
+import type { CanvasTemplate } from "@/components/editor/starter-templates"
+import { useStarterTemplatesUi } from "@/components/editor/starter-templates-ui"
 import {
   DEFAULT_EDGE_COLOR,
   DEFAULT_NODE_COLOR,
@@ -58,6 +63,83 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
   },
 }
 
+const FIT_VIEW_DURATION_MS = 200
+const FLOW_STORAGE_KEY = "flow"
+
+/** Matches @liveblocks/react-flow node sync defaults so local-only fields stay local. */
+const NODE_LIVE_CONFIG = {
+  selected: false,
+  dragging: false,
+  measured: false,
+  resizing: false,
+  position: "atomic",
+  sourcePosition: "atomic",
+  targetPosition: "atomic",
+  extent: "atomic",
+  origin: "atomic",
+  handles: "atomic",
+} as const
+
+/** Matches @liveblocks/react-flow edge sync defaults. */
+const EDGE_LIVE_CONFIG = {
+  selected: false,
+  markerStart: "atomic",
+  markerEnd: "atomic",
+  label: "atomic",
+  labelBgPadding: "atomic",
+} as const
+
+interface FlowLiveMap {
+  keys: () => IterableIterator<string>
+  delete: (id: string) => boolean
+  set: (id: string, value: ReturnType<typeof LiveObject.from>) => void
+}
+
+interface FlowLiveObject {
+  get: (key: "nodes" | "edges") => FlowLiveMap
+}
+
+function toLiveNode(node: CanvasNode) {
+  return LiveObject.from(
+    {
+      id: node.id,
+      type: node.type ?? "canvasNode",
+      position: { x: node.position.x, y: node.position.y },
+      width: node.width ?? null,
+      height: node.height ?? null,
+      data: {
+        label: node.data.label,
+        color: node.data.color,
+        shape: node.data.shape,
+      },
+    },
+    NODE_LIVE_CONFIG,
+  )
+}
+
+function toLiveEdge(edge: CanvasEdge) {
+  return LiveObject.from(
+    {
+      id: edge.id,
+      type: edge.type ?? "canvasEdge",
+      source: edge.source,
+      target: edge.target,
+      data: {
+        label: edge.data?.label ?? "",
+      },
+      ...(edge.style
+        ? {
+            style: {
+              stroke: edge.style.stroke ?? DEFAULT_EDGE_COLOR,
+              strokeWidth: edge.style.strokeWidth ?? 1.25,
+            },
+          }
+        : {}),
+    },
+    EDGE_LIVE_CONFIG,
+  )
+}
+
 let nodeIdCounter = 0
 
 function createNodeId(shape: NodeShape) {
@@ -92,7 +174,8 @@ export function CollaborativeCanvas() {
 }
 
 function CollaborativeCanvasInner() {
-  const { screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition, fitView } = useReactFlow()
+  const { isOpen, setOpen } = useStarterTemplatesUi()
 
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
@@ -104,6 +187,37 @@ function CollaborativeCanvasInner() {
         initial: [],
       },
     })
+
+  const replaceCanvasWithTemplate = useMutation(
+    ({ storage }, template: CanvasTemplate) => {
+      // React Flow storage key is managed by useLiveblocksFlow; Storage typing is empty.
+      const flow = (
+        storage as unknown as { get: (key: string) => FlowLiveObject | undefined }
+      ).get(FLOW_STORAGE_KEY)
+      if (!flow) {
+        return
+      }
+
+      const nodesMap = flow.get("nodes")
+      const edgesMap = flow.get("edges")
+
+      for (const edgeId of [...edgesMap.keys()]) {
+        edgesMap.delete(edgeId)
+      }
+      for (const nodeId of [...nodesMap.keys()]) {
+        nodesMap.delete(nodeId)
+      }
+
+      for (const node of template.nodes) {
+        nodesMap.set(node.id, toLiveNode(node))
+      }
+
+      for (const edge of template.edges) {
+        edgesMap.set(edge.id, toLiveEdge(edge))
+      }
+    },
+    [],
+  )
 
   const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -148,6 +262,17 @@ function CollaborativeCanvasInner() {
     [onNodesChange, screenToFlowPosition],
   )
 
+  const handleImportTemplate = useCallback(
+    (template: CanvasTemplate) => {
+      replaceCanvasWithTemplate(template)
+
+      window.setTimeout(() => {
+        void fitView({ duration: FIT_VIEW_DURATION_MS, padding: 0.2 })
+      }, 50)
+    },
+    [fitView, replaceCanvasWithTemplate],
+  )
+
   const canvasEdges = edges.map((edge) =>
     edge.type === "canvasEdge"
       ? edge
@@ -190,6 +315,11 @@ function CollaborativeCanvasInner() {
       </ReactFlow>
       <CanvasControls />
       <ShapePanel />
+      <StarterTemplatesModal
+        open={isOpen}
+        onOpenChange={setOpen}
+        onImport={handleImportTemplate}
+      />
     </div>
   )
 }

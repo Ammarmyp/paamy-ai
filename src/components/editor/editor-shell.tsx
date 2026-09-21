@@ -17,6 +17,10 @@ import { EditorNavbar } from "@/components/editor/editor-navbar"
 import { ProjectSidebar } from "@/components/editor/project-sidebar"
 import { RenameProjectDialog } from "@/components/editor/rename-project-dialog"
 import { ShareProjectDialog } from "@/components/editor/share-project-dialog"
+import {
+  StarterTemplatesUiProvider,
+  useStarterTemplatesUi,
+} from "@/components/editor/starter-templates-ui"
 import { Button } from "@/components/ui/button"
 import { useProjectActions } from "@/hooks/use-project-actions"
 import type { ProjectListItem } from "@/lib/project-types"
@@ -48,11 +52,30 @@ export function EditorShell({
   sharedProjects,
   children,
 }: EditorShellProps) {
+  return (
+    <StarterTemplatesUiProvider>
+      <EditorShellInner
+        ownedProjects={ownedProjects}
+        sharedProjects={sharedProjects}
+      >
+        {children}
+      </EditorShellInner>
+    </StarterTemplatesUiProvider>
+  )
+}
+
+function EditorShellInner({
+  ownedProjects,
+  sharedProjects,
+  children,
+}: EditorShellProps) {
   const pathname = usePathname()
   const activeRoomId = getActiveRoomId(pathname)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
+  const starterTemplates = useStarterTemplatesUi()
+  const { setOpen: setTemplatesOpen } = starterTemplates
   const {
     dialog,
     selectedProject,
@@ -84,7 +107,8 @@ export function EditorShell({
 
   useEffect(() => {
     setIsShareOpen(false)
-  }, [activeRoomId])
+    setTemplatesOpen(false)
+  }, [activeRoomId, setTemplatesOpen])
 
   return (
     <OpenCreateProjectContext.Provider value={openCreate}>
@@ -96,6 +120,7 @@ export function EditorShell({
           isAiSidebarOpen={isAiSidebarOpen}
           onToggleAiSidebar={() => setIsAiSidebarOpen((open) => !open)}
           onShare={() => setIsShareOpen(true)}
+          onOpenStarterTemplates={starterTemplates.open}
         />
         <ProjectSidebar
           isOpen={isSidebarOpen}
