@@ -4,7 +4,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Starter templates (`18-starter-template`) — complete
+- AI sidebar shell (`20-ai-sidebar-shell`) — complete
 
 ## Current Goal
 
@@ -120,6 +120,14 @@ Update this file whenever the current phase, active feature, or implementation s
   - `src/components/editor/starter-templates-modal.tsx` — dialog with scrollable card grid, lightweight shape/edge previews (no React Flow), Import per template
   - `src/components/editor/starter-templates-ui.tsx` — shell-level open state for navbar ↔ canvas wiring
   - Navbar `LayoutTemplate` button; import clears via Liveblocks `onDelete` then adds template nodes/edges and fits view
+  - `pnpm run build` passes
+- `context/feature-specs/20-ai-sidebar-shell.md`
+  - `src/components/editor/ai-sidebar.tsx` — extracted floating right sidebar; parent still owns open/close; existing slide/position/surface styles preserved
+  - Header: `AI Workspace`, `Collaborate with Ghost AI`, bot icon, close button
+  - Tabs: AI Architect / Specs with accent active styling
+  - Architect: empty state, starter chips, local user messages, auto-resizing textarea, Enter to send
+  - Specs: Generate Spec button + static demo spec card with disabled download
+  - No backend, Liveblocks, or AI generation
   - `pnpm run build` passes
 
 ## In Progress

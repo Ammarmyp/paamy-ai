@@ -9,8 +9,8 @@ import {
   type ReactNode,
 } from "react"
 import { usePathname } from "next/navigation"
-import { X } from "lucide-react"
 
+import { AiSidebar } from "@/components/editor/ai-sidebar"
 import { CreateProjectDialog } from "@/components/editor/create-project-dialog"
 import { DeleteProjectDialog } from "@/components/editor/delete-project-dialog"
 import { EditorNavbar } from "@/components/editor/editor-navbar"
@@ -21,10 +21,8 @@ import {
   StarterTemplatesUiProvider,
   useStarterTemplatesUi,
 } from "@/components/editor/starter-templates-ui"
-import { Button } from "@/components/ui/button"
 import { useProjectActions } from "@/hooks/use-project-actions"
 import type { ProjectListItem } from "@/lib/project-types"
-import { cn } from "@/lib/utils"
 
 interface EditorShellProps {
   ownedProjects: ProjectListItem[]
@@ -134,7 +132,7 @@ function EditorShellInner({
         />
         <div className="relative flex min-h-0 flex-1">
           <main className="relative flex min-w-0 flex-1 flex-col">{children}</main>
-          <AiSidebarPlaceholder
+          <AiSidebar
             isOpen={isAiSidebarOpen}
             onClose={() => setIsAiSidebarOpen(false)}
           />
@@ -187,39 +185,5 @@ function EditorShellInner({
         ) : null}
       </div>
     </OpenCreateProjectContext.Provider>
-  )
-}
-
-interface AiSidebarPlaceholderProps {
-  isOpen: boolean
-  onClose: () => void
-}
-
-function AiSidebarPlaceholder({ isOpen, onClose }: AiSidebarPlaceholderProps) {
-  return (
-    <aside
-      aria-hidden={!isOpen}
-      inert={!isOpen}
-      className={cn(
-        "pointer-events-none fixed top-12 right-0 z-40 flex h-[calc(100vh-3rem)] w-80 flex-col border-l border-surface-border bg-surface/95 backdrop-blur-sm transition-transform duration-200 ease-out",
-        isOpen ? "pointer-events-auto translate-x-0" : "translate-x-full",
-      )}
-    >
-      <div className="flex items-center justify-between border-b border-surface-border px-4 py-3">
-        <h2 className="text-sm font-medium text-copy-primary">AI</h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Close AI sidebar"
-          onClick={onClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="flex flex-1 items-center justify-center px-4 text-center">
-        <p className="text-sm text-copy-muted">AI chat will live here.</p>
-      </div>
-    </aside>
   )
 }
