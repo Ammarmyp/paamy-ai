@@ -119,6 +119,7 @@ function EditorShellInner({
           onToggleAiSidebar={() => setIsAiSidebarOpen((open) => !open)}
           onShare={() => setIsShareOpen(true)}
           onOpenStarterTemplates={starterTemplates.open}
+          showUserButton={!activeRoomId}
         />
         <ProjectSidebar
           isOpen={isSidebarOpen}

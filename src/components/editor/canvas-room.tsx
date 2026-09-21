@@ -20,7 +20,7 @@ export function CanvasRoom({ roomId, children }: CanvasRoomProps) {
         id={roomId}
         initialPresence={{
           cursor: null,
-          isThinking: false,
+          thinking: false,
         }}
       >
         <ErrorBoundary fallback={<CanvasConnectionError />}>
