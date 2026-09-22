@@ -146,6 +146,8 @@ Update this file whenever the current phase, active feature, or implementation s
   - Canvas Delete/Backspace removes selected nodes/edges through Liveblocks `onDelete` (React Flow built-in delete disabled)
   - Shape drop centers node on cursor; React Flow `fitView` prop removed so first drop does not auto-zoom; explicit fit only on hydrate/template import
   - `next.config.ts` allows Clerk avatar hosts `img.clerk.com` / `img.clerk.co`
+  - Review follow-ups: canvas access 404s; hydrate gates autosave; `CanvasRoom` keyed by roomId; autosave queue/hooks hardened; strict snapshot schema; edge handles restored
+  - `22-design-agent-api.md` updated with auth checks and Trigger.dev token TTL/scope/failure contract (implementation still next)
   - `pnpm run build` passes
 
 ## In Progress

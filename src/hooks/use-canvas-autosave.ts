@@ -35,69 +35,115 @@ export function useCanvasAutosave({
 }: UseCanvasAutosaveOptions): UseCanvasAutosaveResult {
   const [status, setStatus] = useState<CanvasSaveStatus>("idle")
   const lastSavedJsonRef = useRef<string | null>(null)
+  const inFlightJsonRef = useRef<string | null>(null)
   const isSavingRef = useRef(false)
   const pendingSnapshotRef = useRef<CanvasSnapshot | null>(null)
   const nodesRef = useRef(nodes)
   const edgesRef = useRef(edges)
   const projectIdRef = useRef(projectId)
 
-  nodesRef.current = nodes
-  edgesRef.current = edges
-  projectIdRef.current = projectId
+  useEffect(() => {
+    nodesRef.current = nodes
+    edgesRef.current = edges
+    projectIdRef.current = projectId
+  })
 
-  const saveSnapshot = useCallback(async (snapshot: CanvasSnapshot) => {
+  const drainSaveQueue = useCallback(async () => {
+    if (isSavingRef.current) {
+      return
+    }
+
+    isSavingRef.current = true
+
+    try {
+      while (true) {
+        const snapshot = pendingSnapshotRef.current
+        if (!snapshot) {
+          break
+        }
+
+        pendingSnapshotRef.current = null
+        const nextJson = JSON.stringify(snapshot)
+
+        if (nextJson === lastSavedJsonRef.current) {
+          setStatus((current) => (current === "idle" ? current : "saved"))
+          continue
+        }
+
+        inFlightJsonRef.current = nextJson
+        setStatus("saving")
+
+        try {
+          const response = await fetch(
+            `/api/projects/${projectIdRef.current}/canvas`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: nextJson,
+            },
+          )
+
+          if (!response.ok) {
+            throw new Error(`Save failed (${response.status})`)
+          }
+
+          lastSavedJsonRef.current = nextJson
+          setStatus("saved")
+        } catch {
+          setStatus("error")
+          break
+        } finally {
+          inFlightJsonRef.current = null
+        }
+      }
+    } finally {
+      isSavingRef.current = false
+    }
+  }, [])
+
+  const enqueueSave = useCallback(
+    (snapshot: CanvasSnapshot) => {
+      const nextJson = JSON.stringify(snapshot)
+
+      // While a save is in flight, queue whenever the body differs from the
+      // in-flight snapshot — including reverted states (e.g. back to S0).
+      if (isSavingRef.current) {
+        if (nextJson !== inFlightJsonRef.current) {
+          pendingSnapshotRef.current = snapshot
+        }
+        return
+      }
+
+      if (nextJson === lastSavedJsonRef.current) {
+        setStatus((current) => (current === "idle" ? current : "saved"))
+        return
+      }
+
+      pendingSnapshotRef.current = snapshot
+      void drainSaveQueue()
+    },
+    [drainSaveQueue],
+  )
+
+  const saveNow = useCallback(async () => {
+    const snapshot = serializeCanvasForSave(nodesRef.current, edgesRef.current)
     const nextJson = JSON.stringify(snapshot)
+
+    if (isSavingRef.current) {
+      if (nextJson !== inFlightJsonRef.current) {
+        pendingSnapshotRef.current = snapshot
+      }
+      return
+    }
+
     if (nextJson === lastSavedJsonRef.current) {
       setStatus((current) => (current === "idle" ? current : "saved"))
       return
     }
 
-    if (isSavingRef.current) {
-      pendingSnapshotRef.current = snapshot
-      return
-    }
-
-    isSavingRef.current = true
-    setStatus("saving")
-
-    try {
-      const response = await fetch(
-        `/api/projects/${projectIdRef.current}/canvas`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: nextJson,
-        },
-      )
-
-      if (!response.ok) {
-        throw new Error(`Save failed (${response.status})`)
-      }
-
-      lastSavedJsonRef.current = nextJson
-      setStatus("saved")
-    } catch {
-      setStatus("error")
-    } finally {
-      isSavingRef.current = false
-
-      const pending = pendingSnapshotRef.current
-      if (pending) {
-        pendingSnapshotRef.current = null
-        void saveSnapshot(pending)
-      }
-    }
-  }, [])
-
-  const saveNow = useCallback(async () => {
-    const snapshot = serializeCanvasForSave(nodesRef.current, edgesRef.current)
-    await saveSnapshot(snapshot)
-  }, [saveSnapshot])
-
-  useEffect(() => {
-    lastSavedJsonRef.current = null
-    setStatus("idle")
-  }, [projectId])
+    pendingSnapshotRef.current = snapshot
+    await drainSaveQueue()
+  }, [drainSaveQueue])
 
   useEffect(() => {
     if (!enabled) {
@@ -113,18 +159,18 @@ export function useCanvasAutosave({
       return
     }
 
-    if (nextJson === lastSavedJsonRef.current) {
+    if (nextJson === lastSavedJsonRef.current && !isSavingRef.current) {
       return
     }
 
     const timeoutId = window.setTimeout(() => {
-      void saveSnapshot(snapshot)
+      enqueueSave(snapshot)
     }, debounceMs)
 
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [projectId, nodes, edges, enabled, debounceMs, saveSnapshot])
+  }, [projectId, nodes, edges, enabled, debounceMs, enqueueSave])
 
   return { status, saveNow }
 }

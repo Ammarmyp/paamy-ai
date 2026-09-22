@@ -38,7 +38,10 @@ import { StarterTemplatesModal } from "@/components/editor/starter-templates-mod
 import type { CanvasTemplate } from "@/components/editor/starter-templates"
 import { useStarterTemplatesUi } from "@/components/editor/starter-templates-ui"
 import { useCanvasAutosave } from "@/hooks/use-canvas-autosave"
-import type { CanvasSnapshot } from "@/lib/canvas-storage"
+import {
+  parseCanvasSnapshot,
+  type CanvasSnapshot,
+} from "@/lib/canvas-storage"
 import {
   DEFAULT_EDGE_COLOR,
   DEFAULT_NODE_COLOR,
@@ -139,6 +142,12 @@ function toLiveEdge(edge: CanvasEdge) {
       type: edge.type ?? "canvasEdge",
       source: edge.source,
       target: edge.target,
+      ...(edge.sourceHandle != null
+        ? { sourceHandle: edge.sourceHandle }
+        : {}),
+      ...(edge.targetHandle != null
+        ? { targetHandle: edge.targetHandle }
+        : {}),
       data: {
         label: edge.data?.label ?? "",
       },
@@ -181,24 +190,17 @@ function parseShapeDragPayload(raw: string): ShapeDragPayload | null {
 }
 
 function parseLoadedCanvas(payload: unknown): CanvasSnapshot | null {
-  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+  if (!isRecord(payload)) {
     return null
   }
 
-  const record = payload as Record<string, unknown>
-  const canvas = record.canvas
-  if (typeof canvas !== "object" || canvas === null || Array.isArray(canvas)) {
+  try {
+    if (isRecord(payload.canvas)) {
+      return parseCanvasSnapshot(payload.canvas)
+    }
+    return parseCanvasSnapshot(payload)
+  } catch {
     return null
-  }
-
-  const snapshot = canvas as Record<string, unknown>
-  if (!Array.isArray(snapshot.nodes) || !Array.isArray(snapshot.edges)) {
-    return null
-  }
-
-  return {
-    nodes: snapshot.nodes as CanvasNode[],
-    edges: snapshot.edges as CanvasEdge[],
   }
 }
 
@@ -213,6 +215,10 @@ function isEditableKeyTarget(target: EventTarget | null) {
 
   const tagName = target.tagName
   return tagName === "INPUT" || tagName === "TEXTAREA"
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
 interface CollaborativeCanvasProps {
@@ -301,8 +307,11 @@ function CollaborativeCanvasInner({ projectId }: CollaborativeCanvasProps) {
   })
 
   useEffect(() => {
+    if (!isHydrated) {
+      return
+    }
     setStatus(status)
-  }, [setStatus, status])
+  }, [isHydrated, setStatus, status])
 
   useEffect(() => {
     registerSaveNow(saveNow)
@@ -333,20 +342,21 @@ function CollaborativeCanvasInner({ projectId }: CollaborativeCanvasProps) {
           return
         }
 
+        // No saved canvas is a successful empty restore — enable autosave.
         if (response.status === 404) {
           setIsHydrated(true)
           return
         }
 
         if (!response.ok) {
-          setIsHydrated(true)
+          setStatus("error")
           return
         }
 
         const payload: unknown = await response.json()
         const canvas = parseLoadedCanvas(payload)
         if (!canvas) {
-          setIsHydrated(true)
+          setStatus("error")
           return
         }
 
@@ -361,11 +371,11 @@ function CollaborativeCanvasInner({ projectId }: CollaborativeCanvasProps) {
             void fitView({ duration: FIT_VIEW_DURATION_MS, padding: 0.2 })
           }, 50)
         }
+
+        setIsHydrated(true)
       } catch {
-        // Leave the empty room as-is when restore fails.
-      } finally {
         if (!cancelled) {
-          setIsHydrated(true)
+          setStatus("error")
         }
       }
     }

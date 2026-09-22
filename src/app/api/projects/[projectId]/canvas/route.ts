@@ -9,7 +9,6 @@ import {
 } from "@/lib/canvas-storage"
 import { getClerkIdentity, getAccessibleProject } from "@/lib/project-access"
 import { findProjectById, updateProjectCanvasJsonPath } from "@/lib/projects"
-import type { CanvasEdge, CanvasNode } from "@/types/canvas"
 
 interface CanvasRouteContext {
   params: Promise<{ projectId: string }>
@@ -37,7 +36,7 @@ export async function GET(
 
   const accessible = await getAccessibleProject(projectId, identity)
   if (!accessible) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    return NextResponse.json({ error: "Project not found" }, { status: 404 })
   }
 
   if (!accessible.canvasJsonPath) {
@@ -75,7 +74,7 @@ export async function PUT(request: Request, context: CanvasRouteContext) {
 
   const accessible = await getAccessibleProject(projectId, identity)
   if (!accessible) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    return NextResponse.json({ error: "Project not found" }, { status: 404 })
   }
 
   let body: unknown
@@ -123,11 +122,7 @@ function parseCanvasRequestBody(body: unknown) {
   // Accept either `{ nodes, edges }` or `{ canvas: { nodes, edges } }`.
   const payload = isRecord(body.canvas) ? body.canvas : body
   const snapshot = parseCanvasSnapshot(payload)
-
-  return serializeCanvasForSave(
-    snapshot.nodes as CanvasNode[],
-    snapshot.edges as CanvasEdge[],
-  )
+  return serializeCanvasForSave(snapshot.nodes, snapshot.edges)
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
