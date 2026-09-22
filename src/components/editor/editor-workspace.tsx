@@ -9,8 +9,8 @@ interface EditorWorkspaceProps {
 export function EditorWorkspace({ roomId }: EditorWorkspaceProps) {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col bg-base">
-      <CanvasRoom roomId={roomId}>
-        <CollaborativeCanvas />
+      <CanvasRoom key={roomId} roomId={roomId}>
+        <CollaborativeCanvas projectId={roomId} />
       </CanvasRoom>
     </div>
   )
