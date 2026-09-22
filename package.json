@@ -21,6 +21,7 @@
     "@liveblocks/react-flow": "^3.24.1",
     "@liveblocks/react-ui": "^3.24.1",
     "@prisma/orm-postgres": "8.0.0-rc.11",
+    "@vercel/blob": "^2.8.0",
     "@xyflow/react": "^12.11.6",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",

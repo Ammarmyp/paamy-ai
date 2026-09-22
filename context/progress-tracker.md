@@ -4,7 +4,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Presence avatars and live cursors (`19-presence-avatars-cursor`) — complete
+- Canvas autosave (`21-canvas-autosave`) — complete
 
 ## Current Goal
 
@@ -136,6 +136,17 @@ Update this file whenever the current phase, active feature, or implementation s
   - `collaborative-canvas.tsx` broadcasts `cursor` on React Flow `onMouseMove` / `onMouseLeave`
   - `liveblocks.config.ts` Presence: `cursor` and `thinking`
   - `pnpm run build` passes
+- `context/feature-specs/21-canvas-autosave.md`
+  - `@vercel/blob` installed; reused existing `Project.canvasJsonPath` (no schema migration)
+  - `src/lib/canvas-storage.ts` — upload/fetch helpers; blob path `canvas/{projectId}.json`; Prisma stores URL only
+  - `PUT` / `GET` `/api/projects/[projectId]/canvas` — owner or collaborator; upload JSON to Vercel Blob; persist URL on project; load from blob URL
+  - `src/hooks/use-canvas-autosave.ts` — debounced saves (1.5s), status `idle` | `saving` | `saved` | `error`
+  - Editor hydrates from blob only when Liveblocks room has no nodes/edges; skips load if room already active
+  - Navbar Save button shows save status; manual save via same API
+  - Canvas Delete/Backspace removes selected nodes/edges through Liveblocks `onDelete` (React Flow built-in delete disabled)
+  - Shape drop centers node on cursor; React Flow `fitView` prop removed so first drop does not auto-zoom; explicit fit only on hydrate/template import
+  - `next.config.ts` allows Clerk avatar hosts `img.clerk.com` / `img.clerk.co`
+  - `pnpm run build` passes
 
 ## In Progress
 
@@ -163,6 +174,7 @@ Update this file whenever the current phase, active feature, or implementation s
 - Liveblocks auth uses access-token sessions (`prepareSession`); room ID equals project ID; rooms are created on demand via `getOrCreateRoom`
 - Canvas shape creation uses HTML5 drag-and-drop into the React Flow wrapper; new nodes are added via Liveblocks `onNodesChange` `{ type: "add" }` so they sync across clients
 - Presence avatars and live cursors belong to the editor canvas view, not the shared editor-home navbar; current user identity for filtering comes from the Clerk session
+- Canvas snapshots are stored in Vercel Blob (`canvas/{projectId}.json`) with **private** access; Prisma `canvasJsonPath` holds the blob URL only; reads use `@vercel/blob` `get`, not a public URL fetch; autosave is debounced and restores only into empty Liveblocks rooms
 
 ## Session Notes
 
@@ -171,3 +183,4 @@ Update this file whenever the current phase, active feature, or implementation s
 - Do not edit emitted `src/prisma/contract.json` / `contract.d.ts`; edit `contract.prisma` then `pnpm prisma contract emit`
 - Prisma 8 `db.ts` is a process-lifetime singleton; `db.close()` is for scripts, not request handlers
 - Liveblocks requires `LIVEBLOCKS_SECRET_KEY` in `.env` for `/api/liveblocks-auth`
+- Canvas autosave requires `BLOB_READ_WRITE_TOKEN` in `.env` for `@vercel/blob` uploads

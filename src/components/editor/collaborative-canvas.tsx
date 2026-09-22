@@ -1,6 +1,14 @@
 "use client"
 
-import { useCallback, type DragEvent, type MouseEvent } from "react"
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react"
 import {
   Background,
   BackgroundVariant,
@@ -8,6 +16,8 @@ import {
   MarkerType,
   ReactFlow,
   ReactFlowProvider,
+  useEdges,
+  useNodes,
   useReactFlow,
   type DefaultEdgeOptions,
   type EdgeTypes,
@@ -20,12 +30,15 @@ import { useLiveblocksFlow } from "@liveblocks/react-flow"
 import { CanvasControls } from "@/components/editor/canvas-controls"
 import { CanvasEdgeComponent } from "@/components/editor/canvas-edge"
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
+import { useCanvasSaveUi } from "@/components/editor/canvas-save-ui"
 import { LiveCursors } from "@/components/editor/live-cursors"
 import { PresenceAvatars } from "@/components/editor/presence-avatars"
 import { ShapePanel } from "@/components/editor/shape-panel"
 import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal"
 import type { CanvasTemplate } from "@/components/editor/starter-templates"
 import { useStarterTemplatesUi } from "@/components/editor/starter-templates-ui"
+import { useCanvasAutosave } from "@/hooks/use-canvas-autosave"
+import type { CanvasSnapshot } from "@/lib/canvas-storage"
 import {
   DEFAULT_EDGE_COLOR,
   DEFAULT_NODE_COLOR,
@@ -167,18 +180,62 @@ function parseShapeDragPayload(raw: string): ShapeDragPayload | null {
   }
 }
 
-export function CollaborativeCanvas() {
+function parseLoadedCanvas(payload: unknown): CanvasSnapshot | null {
+  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+    return null
+  }
+
+  const record = payload as Record<string, unknown>
+  const canvas = record.canvas
+  if (typeof canvas !== "object" || canvas === null || Array.isArray(canvas)) {
+    return null
+  }
+
+  const snapshot = canvas as Record<string, unknown>
+  if (!Array.isArray(snapshot.nodes) || !Array.isArray(snapshot.edges)) {
+    return null
+  }
+
+  return {
+    nodes: snapshot.nodes as CanvasNode[],
+    edges: snapshot.edges as CanvasEdge[],
+  }
+}
+
+function isEditableKeyTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+
+  if (target.isContentEditable) {
+    return true
+  }
+
+  const tagName = target.tagName
+  return tagName === "INPUT" || tagName === "TEXTAREA"
+}
+
+interface CollaborativeCanvasProps {
+  projectId: string
+}
+
+export function CollaborativeCanvas({ projectId }: CollaborativeCanvasProps) {
   return (
     <ReactFlowProvider>
-      <CollaborativeCanvasInner />
+      <CollaborativeCanvasInner projectId={projectId} />
     </ReactFlowProvider>
   )
 }
 
-function CollaborativeCanvasInner() {
+function CollaborativeCanvasInner({ projectId }: CollaborativeCanvasProps) {
   const { screenToFlowPosition, fitView } = useReactFlow()
+  const flowNodes = useNodes<CanvasNode>()
+  const flowEdges = useEdges<CanvasEdge>()
   const { isOpen, setOpen } = useStarterTemplatesUi()
+  const { setStatus, registerSaveNow } = useCanvasSaveUi()
   const updateMyPresence = useUpdateMyPresence()
+  const [isHydrated, setIsHydrated] = useState(false)
+  const hasAttemptedLoadRef = useRef(false)
 
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<CanvasNode, CanvasEdge>({
@@ -191,18 +248,30 @@ function CollaborativeCanvasInner() {
       },
     })
 
-  const replaceCanvasWithTemplate = useMutation(
-    ({ storage }, template: CanvasTemplate) => {
+  const replaceCanvasContents = useMutation(
+    (
+      { storage },
+      snapshot: Pick<CanvasTemplate, "nodes" | "edges">,
+      options?: { onlyIfEmpty?: boolean },
+    ) => {
       // React Flow storage key is managed by useLiveblocksFlow; Storage typing is empty.
       const flow = (
         storage as unknown as { get: (key: string) => FlowLiveObject | undefined }
       ).get(FLOW_STORAGE_KEY)
       if (!flow) {
-        return
+        return false
       }
 
       const nodesMap = flow.get("nodes")
       const edgesMap = flow.get("edges")
+
+      if (options?.onlyIfEmpty) {
+        const hasNodes = [...nodesMap.keys()].length > 0
+        const hasEdges = [...edgesMap.keys()].length > 0
+        if (hasNodes || hasEdges) {
+          return false
+        }
+      }
 
       for (const edgeId of [...edgesMap.keys()]) {
         edgesMap.delete(edgeId)
@@ -211,16 +280,104 @@ function CollaborativeCanvasInner() {
         nodesMap.delete(nodeId)
       }
 
-      for (const node of template.nodes) {
+      for (const node of snapshot.nodes) {
         nodesMap.set(node.id, toLiveNode(node))
       }
 
-      for (const edge of template.edges) {
+      for (const edge of snapshot.edges) {
         edgesMap.set(edge.id, toLiveEdge(edge))
       }
+
+      return true
     },
     [],
   )
+
+  const { status, saveNow } = useCanvasAutosave({
+    projectId,
+    nodes,
+    edges,
+    enabled: isHydrated,
+  })
+
+  useEffect(() => {
+    setStatus(status)
+  }, [setStatus, status])
+
+  useEffect(() => {
+    registerSaveNow(saveNow)
+    return () => {
+      registerSaveNow(null)
+    }
+  }, [registerSaveNow, saveNow])
+
+  useEffect(() => {
+    if (hasAttemptedLoadRef.current) {
+      return
+    }
+    hasAttemptedLoadRef.current = true
+
+    let cancelled = false
+
+    async function loadSavedCanvasIfNeeded() {
+      if (nodes.length > 0 || edges.length > 0) {
+        if (!cancelled) {
+          setIsHydrated(true)
+        }
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/projects/${projectId}/canvas`)
+        if (cancelled) {
+          return
+        }
+
+        if (response.status === 404) {
+          setIsHydrated(true)
+          return
+        }
+
+        if (!response.ok) {
+          setIsHydrated(true)
+          return
+        }
+
+        const payload: unknown = await response.json()
+        const canvas = parseLoadedCanvas(payload)
+        if (!canvas) {
+          setIsHydrated(true)
+          return
+        }
+
+        if (canvas.nodes.length === 0 && canvas.edges.length === 0) {
+          setIsHydrated(true)
+          return
+        }
+
+        const applied = replaceCanvasContents(canvas, { onlyIfEmpty: true })
+        if (applied) {
+          window.setTimeout(() => {
+            void fitView({ duration: FIT_VIEW_DURATION_MS, padding: 0.2 })
+          }, 50)
+        }
+      } catch {
+        // Leave the empty room as-is when restore fails.
+      } finally {
+        if (!cancelled) {
+          setIsHydrated(true)
+        }
+      }
+    }
+
+    void loadSavedCanvasIfNeeded()
+
+    return () => {
+      cancelled = true
+    }
+    // Run once after Liveblocks storage is ready (suspense resolved).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only hydrate
+  }, [])
 
   const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -237,10 +394,16 @@ function CollaborativeCanvasInner() {
         return
       }
 
-      const position = screenToFlowPosition({
+      const cursorPosition = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       })
+
+      // Place the node's center on the cursor (position is top-left in React Flow).
+      const position = {
+        x: cursorPosition.x - payload.width / 2,
+        y: cursorPosition.y - payload.height / 2,
+      }
 
       const newNode: CanvasNode = {
         id: createNodeId(payload.shape),
@@ -282,13 +445,39 @@ function CollaborativeCanvasInner() {
 
   const handleImportTemplate = useCallback(
     (template: CanvasTemplate) => {
-      replaceCanvasWithTemplate(template)
+      replaceCanvasContents(template)
 
       window.setTimeout(() => {
         void fitView({ duration: FIT_VIEW_DURATION_MS, padding: 0.2 })
       }, 50)
     },
-    [fitView, replaceCanvasWithTemplate],
+    [fitView, replaceCanvasContents],
+  )
+
+  const handleCanvasKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== "Delete" && event.key !== "Backspace") {
+        return
+      }
+
+      if (isEditableKeyTarget(event.target)) {
+        return
+      }
+
+      const selectedNodes = flowNodes.filter((node) => node.selected)
+      const selectedEdges = flowEdges.filter((edge) => edge.selected)
+
+      if (selectedNodes.length === 0 && selectedEdges.length === 0) {
+        return
+      }
+
+      event.preventDefault()
+      onDelete({
+        nodes: selectedNodes,
+        edges: selectedEdges,
+      })
+    },
+    [flowEdges, flowNodes, onDelete],
   )
 
   const canvasEdges = edges.map((edge) =>
@@ -309,6 +498,7 @@ function CollaborativeCanvasInner() {
       className="relative h-full min-h-0 w-full flex-1"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onKeyDown={handleCanvasKeyDown}
     >
       <ReactFlow
         nodes={nodes}
@@ -323,7 +513,7 @@ function CollaborativeCanvasInner() {
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         connectionMode={ConnectionMode.Loose}
-        fitView
+        deleteKeyCode={null}
         className="bg-base"
       >
         <Background

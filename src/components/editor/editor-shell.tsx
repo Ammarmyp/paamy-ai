@@ -11,6 +11,7 @@ import {
 import { usePathname } from "next/navigation"
 
 import { AiSidebar } from "@/components/editor/ai-sidebar"
+import { CanvasSaveUiProvider, useCanvasSaveUi } from "@/components/editor/canvas-save-ui"
 import { CreateProjectDialog } from "@/components/editor/create-project-dialog"
 import { DeleteProjectDialog } from "@/components/editor/delete-project-dialog"
 import { EditorNavbar } from "@/components/editor/editor-navbar"
@@ -52,12 +53,14 @@ export function EditorShell({
 }: EditorShellProps) {
   return (
     <StarterTemplatesUiProvider>
-      <EditorShellInner
-        ownedProjects={ownedProjects}
-        sharedProjects={sharedProjects}
-      >
-        {children}
-      </EditorShellInner>
+      <CanvasSaveUiProvider>
+        <EditorShellInner
+          ownedProjects={ownedProjects}
+          sharedProjects={sharedProjects}
+        >
+          {children}
+        </EditorShellInner>
+      </CanvasSaveUiProvider>
     </StarterTemplatesUiProvider>
   )
 }
@@ -74,6 +77,8 @@ function EditorShellInner({
   const [isShareOpen, setIsShareOpen] = useState(false)
   const starterTemplates = useStarterTemplatesUi()
   const { setOpen: setTemplatesOpen } = starterTemplates
+  const canvasSave = useCanvasSaveUi()
+  const { setStatus: setCanvasSaveStatus } = canvasSave
   const {
     dialog,
     selectedProject,
@@ -106,7 +111,8 @@ function EditorShellInner({
   useEffect(() => {
     setIsShareOpen(false)
     setTemplatesOpen(false)
-  }, [activeRoomId, setTemplatesOpen])
+    setCanvasSaveStatus("idle")
+  }, [activeRoomId, setTemplatesOpen, setCanvasSaveStatus])
 
   return (
     <OpenCreateProjectContext.Provider value={openCreate}>
@@ -119,6 +125,10 @@ function EditorShellInner({
           onToggleAiSidebar={() => setIsAiSidebarOpen((open) => !open)}
           onShare={() => setIsShareOpen(true)}
           onOpenStarterTemplates={starterTemplates.open}
+          saveStatus={activeRoomId ? canvasSave.status : "idle"}
+          onSave={() => {
+            void canvasSave.saveNow()
+          }}
           showUserButton={!activeRoomId}
         />
         <ProjectSidebar

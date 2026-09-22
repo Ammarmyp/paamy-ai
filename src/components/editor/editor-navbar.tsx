@@ -7,10 +7,12 @@ import {
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
+  Save,
   Share2,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave"
 import { cn } from "@/lib/utils"
 
 interface EditorNavbarProps {
@@ -21,8 +23,23 @@ interface EditorNavbarProps {
   onToggleAiSidebar?: () => void
   onShare?: () => void
   onOpenStarterTemplates?: () => void
+  saveStatus?: CanvasSaveStatus
+  onSave?: () => void
   showUserButton?: boolean
   className?: string
+}
+
+function saveStatusLabel(status: CanvasSaveStatus): string {
+  switch (status) {
+    case "saving":
+      return "Saving…"
+    case "saved":
+      return "Saved"
+    case "error":
+      return "Save failed"
+    default:
+      return "Save"
+  }
 }
 
 export function EditorNavbar({
@@ -33,6 +50,8 @@ export function EditorNavbar({
   onToggleAiSidebar,
   onShare,
   onOpenStarterTemplates,
+  saveStatus = "idle",
+  onSave,
   showUserButton = true,
   className,
 }: EditorNavbarProps) {
@@ -72,6 +91,23 @@ export function EditorNavbar({
       <div className="flex flex-1 items-center justify-end gap-1">
         {showWorkspaceActions ? (
           <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label={saveStatusLabel(saveStatus)}
+              disabled={saveStatus === "saving"}
+              onClick={onSave}
+              className={cn(
+                "gap-1.5 text-copy-muted",
+                saveStatus === "saved" && "text-success",
+                saveStatus === "error" && "text-error",
+                saveStatus === "saving" && "text-copy-secondary",
+              )}
+            >
+              <Save className="h-4 w-4" />
+              <span className="text-xs">{saveStatusLabel(saveStatus)}</span>
+            </Button>
             <Button
               type="button"
               variant="ghost"

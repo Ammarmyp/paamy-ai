@@ -133,8 +133,8 @@ export function ShapePanel() {
         <div
           className="pointer-events-none fixed z-50 opacity-60"
           style={{
-            left: preview.x,
-            top: preview.y,
+            left: preview.x - preview.width / 2,
+            top: preview.y - preview.height / 2,
           }}
           aria-hidden
         >

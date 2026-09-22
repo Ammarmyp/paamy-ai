@@ -140,6 +140,24 @@ export async function deleteProject(projectId: string) {
   return prisma.orm.public.Project.where({ id: projectId }).delete()
 }
 
+export async function updateProjectCanvasJsonPath(
+  projectId: string,
+  canvasJsonPath: string,
+) {
+  return prisma.orm.public.Project.where({ id: projectId })
+    .select(
+      "id",
+      "ownerId",
+      "name",
+      "description",
+      "status",
+      "canvasJsonPath",
+      "createdAt",
+      "updatedAt",
+    )
+    .update({ canvasJsonPath })
+}
+
 export async function loadEditorProjectLists(input: {
   userId: string
   email: string | null
