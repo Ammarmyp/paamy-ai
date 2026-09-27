@@ -30,6 +30,7 @@ import { useLiveblocksFlow } from "@liveblocks/react-flow"
 import { CanvasControls } from "@/components/editor/canvas-controls"
 import { CanvasEdgeComponent } from "@/components/editor/canvas-edge"
 import { CanvasNodeComponent } from "@/components/editor/canvas-node"
+import { usePublishCanvasGraph } from "@/components/editor/canvas-graph-ui"
 import { useCanvasSaveUi } from "@/components/editor/canvas-save-ui"
 import { LiveCursors } from "@/components/editor/live-cursors"
 import { PresenceAvatars } from "@/components/editor/presence-avatars"
@@ -239,6 +240,7 @@ function CollaborativeCanvasInner({ projectId }: CollaborativeCanvasProps) {
   const flowEdges = useEdges<CanvasEdge>()
   const { isOpen, setOpen } = useStarterTemplatesUi()
   const { setStatus, registerSaveNow } = useCanvasSaveUi()
+  const publishCanvasGraph = usePublishCanvasGraph()
   const updateMyPresence = useUpdateMyPresence()
   const [isHydrated, setIsHydrated] = useState(false)
   const hasAttemptedLoadRef = useRef(false)
@@ -253,6 +255,10 @@ function CollaborativeCanvasInner({ projectId }: CollaborativeCanvasProps) {
         initial: [],
       },
     })
+
+  useEffect(() => {
+    publishCanvasGraph({ nodes, edges })
+  }, [nodes, edges, publishCanvasGraph])
 
   const replaceCanvasContents = useMutation(
     (

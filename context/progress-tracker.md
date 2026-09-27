@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Design agent frontend (`26-design-agent-frontend`) — complete
+- Spec generation frontend wiring — complete
 
 ## Current Goal
 
-- Spec generation (API + task + sidebar Specs tab)
+- (pick next feature unit)
 
 ## Completed
 
@@ -189,6 +189,32 @@ Update this file whenever the current phase, active feature, or implementation s
   - Canvas still updates only via Liveblocks (`useLiveblocksFlow`); no manual node/edge sync
   - `roomId` passed into `AiSidebar` from `EditorWorkspace`
   - `pnpm run build` passes
+- `context/feature-specs/27-spec-generation-flow.md`
+  - `src/types/spec-generation.ts` — Zod schemas for request/task payload (`roomId`, `chatHistory`, `nodes`, `edges`; task adds server-derived `projectId`)
+  - `src/lib/ai-spec-agent.ts` — Gemini (`gemini-3.6-flash`) Markdown tech-spec generation from canvas + chat
+  - `src/trigger/generate-spec.ts` — `schemaTask` `generate-spec`; Zod validation; run metadata status (`start`/`processing`/`complete`/`error`); returns `{ projectId, roomId, spec }` (no blob/DB persistence in this unit)
+  - `POST /api/ai/spec` — Clerk auth; access from `roomId` only (never client `projectId`); triggers task; stores `TaskRun`; returns `{ runId }`
+  - `POST /api/ai/spec/token` — Clerk auth; `TaskRun` ownership; 1h run-scoped public token; returns `{ token }`
+  - `pnpm run build` passes
+- `context/feature-specs/28-spec-persistance-download.md`
+  - `ProjectSpec` model (`id`, `projectId` FK cascade, `filePath`, `createdAt`; indexes on `projectId` and `(projectId, createdAt)`)
+  - Migration `migrations/app/20260927T1915_add_project_specs` planned and applied
+  - `src/lib/spec-storage.ts` — private blob upload/fetch; path `specs/{projectId}/{specId}.md`
+  - `src/lib/project-specs.ts` — create/find helpers + `persistGeneratedSpec` (UUID → blob → Prisma metadata)
+  - `generate-spec` task uploads Markdown to Blob, saves `ProjectSpec`, returns `{ projectId, roomId, specId, filePath, spec }`
+  - `GET /api/projects/[projectId]/specs/[specId]/download` — Clerk auth; project access; spec ownership; Markdown attachment via private blob `get` (no raw URL exposure)
+  - `pnpm run build` passes
+- `context/feature-specs/29-spec-ui-integration.md`
+  - `GET /api/projects/[projectId]/specs` — list ProjectSpec metadata (`id`, `createdAt`, `filename`); Clerk auth + project access; no blob URLs
+  - `src/lib/project-specs.ts` — `listProjectSpecs` + shared `getSpecFilename`
+  - `src/components/editor/specs-tab.tsx` — Specs tab list (ScrollArea), clickable items, download on list + modal; preview Dialog fetches Markdown via download endpoint and renders with `react-markdown`; Escape/close clear preview content
+  - AI sidebar Specs tab uses `SpecsTab` with `roomId` as `projectId`; Generate Spec button left as-is
+  - `pnpm run build` passes
+- Spec generation frontend wiring (Generate Spec button)
+  - `src/components/editor/canvas-graph-ui.tsx` — room-scoped snapshot of Liveblocks canvas nodes/edges for Specs tab
+  - Specs tab Generate Spec: snapshots canvas + `ai-chat` history → `POST /api/ai/spec` → `POST /api/ai/spec/token` → `useRealtimeRun`; refreshes list on success; button spinner + status/error
+  - Generate disabled outside a project room (editor home)
+  - `pnpm run build` passes
 
 ## In Progress
 
@@ -196,7 +222,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Spec generation (API + Trigger task + Specs tab)
+- (pick next feature unit)
 
 ## Open Questions
 
@@ -222,6 +248,7 @@ Update this file whenever the current phase, active feature, or implementation s
 - Shared AI activity UI reads Feeds + presence only (no parallel client state); feed payloads are validated via `src/types/tasks.ts` before display
 - Collaborative sidebar chat uses a separate Liveblocks feed (`ai-chat`) from AI status (`ai-status-feed`); chat payloads validated with Zod before render
 - Design agent frontend: client triggers `POST /api/ai/design`, tracks the run with `useRealtimeRun` + returned public token, and relies on Liveblocks for canvas + chat/status feeds (no client-side graph mutation)
+- Spec generation: client supplies `roomId` + canvas/chat snapshot; server derives `projectId` from `roomId` (never trusts client `projectId`); task persists Markdown to private Vercel Blob (`specs/{projectId}/{specId}.md`) with `ProjectSpec.filePath` metadata, and still returns Markdown as output; public tokens for spec runs use 1h TTL via `/api/ai/spec/token`
 
 ## Session Notes
 
