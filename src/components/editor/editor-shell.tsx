@@ -11,6 +11,10 @@ import {
 import { usePathname } from "next/navigation"
 
 import { AiSidebar } from "@/components/editor/ai-sidebar"
+import {
+  AiSidebarUiProvider,
+  useAiSidebarUi,
+} from "@/components/editor/ai-sidebar-ui"
 import { CanvasSaveUiProvider, useCanvasSaveUi } from "@/components/editor/canvas-save-ui"
 import { CreateProjectDialog } from "@/components/editor/create-project-dialog"
 import { DeleteProjectDialog } from "@/components/editor/delete-project-dialog"
@@ -54,12 +58,14 @@ export function EditorShell({
   return (
     <StarterTemplatesUiProvider>
       <CanvasSaveUiProvider>
-        <EditorShellInner
-          ownedProjects={ownedProjects}
-          sharedProjects={sharedProjects}
-        >
-          {children}
-        </EditorShellInner>
+        <AiSidebarUiProvider>
+          <EditorShellInner
+            ownedProjects={ownedProjects}
+            sharedProjects={sharedProjects}
+          >
+            {children}
+          </EditorShellInner>
+        </AiSidebarUiProvider>
       </CanvasSaveUiProvider>
     </StarterTemplatesUiProvider>
   )
@@ -73,7 +79,7 @@ function EditorShellInner({
   const pathname = usePathname()
   const activeRoomId = getActiveRoomId(pathname)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false)
+  const aiSidebar = useAiSidebarUi()
   const [isShareOpen, setIsShareOpen] = useState(false)
   const starterTemplates = useStarterTemplatesUi()
   const { setOpen: setTemplatesOpen } = starterTemplates
@@ -112,7 +118,8 @@ function EditorShellInner({
     setIsShareOpen(false)
     setTemplatesOpen(false)
     setCanvasSaveStatus("idle")
-  }, [activeRoomId, setTemplatesOpen, setCanvasSaveStatus])
+    aiSidebar.setOpen(false)
+  }, [activeRoomId, setTemplatesOpen, setCanvasSaveStatus, aiSidebar.setOpen])
 
   return (
     <OpenCreateProjectContext.Provider value={openCreate}>
@@ -121,8 +128,8 @@ function EditorShellInner({
           isSidebarOpen={isSidebarOpen}
           onToggleSidebar={() => setIsSidebarOpen((open) => !open)}
           projectName={activeProject?.name ?? null}
-          isAiSidebarOpen={isAiSidebarOpen}
-          onToggleAiSidebar={() => setIsAiSidebarOpen((open) => !open)}
+          isAiSidebarOpen={aiSidebar.isOpen}
+          onToggleAiSidebar={aiSidebar.toggle}
           onShare={() => setIsShareOpen(true)}
           onOpenStarterTemplates={starterTemplates.open}
           saveStatus={activeRoomId ? canvasSave.status : "idle"}
@@ -143,10 +150,9 @@ function EditorShellInner({
         />
         <div className="relative flex min-h-0 flex-1">
           <main className="relative flex min-w-0 flex-1 flex-col">{children}</main>
-          <AiSidebar
-            isOpen={isAiSidebarOpen}
-            onClose={() => setIsAiSidebarOpen(false)}
-          />
+          {!activeRoomId ? (
+            <AiSidebar isOpen={aiSidebar.isOpen} onClose={aiSidebar.close} />
+          ) : null}
         </div>
         <CreateProjectDialog
           open={dialog === "create"}

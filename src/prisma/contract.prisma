@@ -31,3 +31,14 @@ model ProjectCollaborator {
   @@index([email])
   @@index([projectId, createdAt])
 }
+
+model TaskRun {
+  id        String            @id @default(uuid())
+  runId     String            @unique
+  projectId String
+  userId    String
+  createdAt TimestamptzString @default(now())
+
+  @@index([runId])
+  @@index([userId, projectId])
+}
