@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Canvas autosave (`21-canvas-autosave`) — complete
+- Design agent frontend (`26-design-agent-frontend`) — complete
 
 ## Current Goal
 
-- Persistence and AI chat.
+- Spec generation (API + task + sidebar Specs tab)
 
 ## Completed
 
@@ -149,6 +149,46 @@ Update this file whenever the current phase, active feature, or implementation s
   - Review follow-ups: canvas access 404s; hydrate gates autosave; `CanvasRoom` keyed by roomId; autosave queue/hooks hardened; strict snapshot schema; edge handles restored
   - `22-design-agent-api.md` updated with auth checks and Trigger.dev token TTL/scope/failure contract (implementation still next)
   - `pnpm run build` passes
+- `context/feature-specs/22-design-agent-api.md`
+  - `TaskRun` model in `src/prisma/contract.prisma` (`runId` unique, `projectId`, `userId`, `createdAt`; indexes on `runId` and `(userId, projectId)`)
+  - Migration `migrations/app/20260922T0911_add_task_runs` planned and applied
+  - `src/trigger/design-agent.ts` — minimal `design-agent` task; accepts `prompt` + `roomId`; logs/echoes only (no AI)
+  - `POST /api/ai/design` — Clerk auth; owner/collaborator access; rejects `roomId !== projectId`; triggers task then stores `TaskRun`; returns `{ runId }`
+  - `POST /api/ai/design/token` — Clerk auth; ownership via `TaskRun`; mints run-scoped public token (`scopes.read.runs: [runId]`, `expirationTime: "15m"`); returns `{ token }`
+  - `src/lib/task-runs.ts` — create + ownership lookup helpers
+  - `pnpm run build` passes
+- `context/feature-specs/23-design-agent-logic.md`
+  - `src/lib/ai-design-agent.ts` — Gemini plan (`@ai-sdk/google`), Liveblocks Feeds status (`ai-status`), ephemeral AI presence (`ghost-ai` + `thinking`/`cursor`), `mutateFlow` action applicator (add/move/resize/update/delete node, add/delete edge) with palette/shape/layout validation
+  - `src/trigger/design-agent.ts` — full design task: start → processing → apply via collaborative flow → complete/error; clears AI presence in `finally`
+  - `liveblocks.config.ts` — `FeedMessageData` typed for AI status feed payloads
+  - `pnpm run build` passes
+- Liveblocks Feeds status upsert fix — `publishAiStatus` falls back to `updateFeedMessage` when `createFeedMessage` fails for an existing message id (Liveblocks returns 500, not 409, on duplicate ids); unblocks Trigger retries and start→processing→complete updates
+- Design agent Gemini model updated from `gemini-2.5-flash` to `gemini-3.6-flash` (2.5 no longer available to new users)
+- `context/feature-specs/24-ai-presence-state.md`
+  - `src/types/tasks.ts` — `AiStatusFeedPayload` schema (`status`, `label`, optional `text` + metadata), `parseAiStatusFeedPayload`, display/active helpers; feed id `ai-status-feed`
+  - Design agent + Liveblocks `FeedMessageData` aligned to the shared schema; publisher always sets `text` (defaults to `label`)
+  - AI sidebar subscribes via `useFeedMessages("ai-status-feed")`, shows only the latest validated status; disables chat input + send loading while generation is active; rest of sidebar stays usable
+  - Workspace sidebar mounts inside `CanvasRoom` (shared status); home keeps a non-room sidebar via `AiSidebarUiProvider`
+  - Live cursors show a spinner in the name badge when `presence.thinking` is true
+  - `pnpm run build` passes
+- `context/feature-specs/25-sidebar-chat-feed.md`
+  - `zod` added; `aiChatMessageSchema` + `parseAiChatFeedPayload` + `AI_CHAT_FEED_ID` (`ai-chat`) in `src/types/tasks.ts`
+  - `liveblocks.config.ts` — `FeedMessageData` union (status | chat); `FeedMetadata.kind`
+  - Room AI sidebar subscribes to `ai-chat` via `useFeedMessages`, ensures feed with `useCreateFeed`, sends via `useCreateFeedMessage`
+  - Messages validated before render; UI shows sender, timestamp, content; input clears on success; small error on send failure
+  - Existing sidebar input/send kept; `ai-status-feed` remains separate; no AI replies or task triggers
+  - Home sidebar still uses local-only messages (no room)
+  - `pnpm run build` passes
+- `context/feature-specs/26-design-agent-frontend.md`
+  - `POST /api/ai/design` returns `{ runId, publicToken }` (15m run-scoped token); `projectId` optional and defaults to `roomId`
+  - Room AI sidebar submit: push user message to `ai-chat`, trigger design API with `{ prompt, roomId }`, store run credentials
+  - `useRealtimeRun(runId, { accessToken: publicToken })` tracks the run; input disabled + send spinner while active
+  - On complete/fail: push final AI (or error) message to `ai-chat`, clear run state
+  - Compact status strip above input only while a run / generation is active (`ai-status-feed`)
+  - Chat UI: user bubbles green `#62C073`, AI dark elevated; green submit button with dimmed disabled state
+  - Canvas still updates only via Liveblocks (`useLiveblocksFlow`); no manual node/edge sync
+  - `roomId` passed into `AiSidebar` from `EditorWorkspace`
+  - `pnpm run build` passes
 
 ## In Progress
 
@@ -156,7 +196,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Next Up
 
-- Persistence and AI chat
+- Spec generation (API + Trigger task + Specs tab)
 
 ## Open Questions
 
@@ -177,9 +217,16 @@ Update this file whenever the current phase, active feature, or implementation s
 - Canvas shape creation uses HTML5 drag-and-drop into the React Flow wrapper; new nodes are added via Liveblocks `onNodesChange` `{ type: "add" }` so they sync across clients
 - Presence avatars and live cursors belong to the editor canvas view, not the shared editor-home navbar; current user identity for filtering comes from the Clerk session
 - Canvas snapshots are stored in Vercel Blob (`canvas/{projectId}.json`) with **private** access; Prisma `canvasJsonPath` holds the blob URL only; reads use `@vercel/blob` `get`, not a public URL fetch; autosave is debounced and restores only into empty Liveblocks rooms
+- Design generation is triggered from authenticated API routes only; Trigger.dev run IDs are persisted in `TaskRun` for ownership checks before minting run-scoped public access tokens (`auth.createPublicToken`, 15m TTL, single-run read scope)
+- Design agent mutates the canvas only through Liveblocks `mutateFlow` (`@liveblocks/react-flow/node`); AI visibility uses ephemeral `setPresence` plus Feeds (`ai-status-feed`) rather than a separate state system
+- Shared AI activity UI reads Feeds + presence only (no parallel client state); feed payloads are validated via `src/types/tasks.ts` before display
+- Collaborative sidebar chat uses a separate Liveblocks feed (`ai-chat`) from AI status (`ai-status-feed`); chat payloads validated with Zod before render
+- Design agent frontend: client triggers `POST /api/ai/design`, tracks the run with `useRealtimeRun` + returned public token, and relies on Liveblocks for canvas + chat/status feeds (no client-side graph mutation)
 
 ## Session Notes
 
+- Fixed editor room load: normalize `sslmode=require` → `verify-full` via `src/lib/database-url.ts`; create Liveblocks `ai-chat` feed lazily on first send (await + catch) instead of fire-and-forget on mount
+- Trigger.dev bootstrap: `@trigger.dev/sdk` / `@trigger.dev/build` 4.6.3, `trigger.config.ts` reads `TRIGGER_PROJECT_REF` from `.env`, `src/trigger/example.ts` (`hello-world`) + `src/trigger/design-agent.ts` (`design-agent`); `trigger:dev` / `trigger:deploy` scripts; set `TRIGGER_SECRET_KEY` + `TRIGGER_PROJECT_REF` in `.env`
 - Do not edit generated `src/components/ui/*` — they import `cn` from the `cn` package; app code should use `@/lib/utils`
 - With `src/app`, Next.js expects `proxy.ts` beside `app` (`src/proxy.ts`), not repo-root `middleware.ts`
 - Do not edit emitted `src/prisma/contract.json` / `contract.d.ts`; edit `contract.prisma` then `pnpm prisma contract emit`

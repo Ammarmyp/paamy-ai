@@ -11,6 +11,10 @@
     "projectCollaborator": {
       "model": "ProjectCollaborator",
       "namespace": "public"
+    },
+    "taskRun": {
+      "model": "TaskRun",
+      "namespace": "public"
     }
   },
   "domain": {
@@ -195,6 +199,67 @@
               },
               "namespaceId": "public",
               "table": "projectCollaborator"
+            }
+          },
+          "TaskRun": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "projectId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "runId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "projectId": {
+                  "column": "projectId"
+                },
+                "runId": {
+                  "column": "runId"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "taskRun"
             }
           }
         }
@@ -382,6 +447,71 @@
                   ]
                 }
               ]
+            },
+            "taskRun": {
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "projectId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "runId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [
+                {
+                  "columns": [
+                    "runId"
+                  ],
+                  "name": "taskRun_runId_idx_a6016437",
+                  "prefix": "taskRun_runId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId",
+                    "projectId"
+                  ],
+                  "name": "taskRun_userId_projectId_idx_a2a73bc7",
+                  "prefix": "taskRun_userId_projectId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "runId"
+                  ]
+                }
+              ]
             }
           },
           "valueSet": {
@@ -398,10 +528,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "59626a603c1362eb56b57ffb44284006acbff0e08044c4ef5463cc932fb60de4"
+    "storageHash": "47b4cfdd5c8fec3df33f2e3b3f4d22bdc9f7ac596d8f1e9db358987f9da46896"
   },
   "execution": {
-    "executionHash": "7ec578a784cbdccc5c139c1139b25fe38492ce8838ee09c17d4edba9d297561d",
+    "executionHash": "0c78ee0d43d04b58eb5fcaf6f5ed32936cd6756e5f433d2e084ffede4d83a05e",
     "mutations": {
       "defaults": [
         {
@@ -439,6 +569,17 @@
             "column": "id",
             "namespace": "public",
             "table": "projectCollaborator"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "taskRun"
           }
         }
       ]

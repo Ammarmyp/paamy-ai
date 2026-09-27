@@ -3,6 +3,7 @@
 import { useAuth } from "@clerk/nextjs"
 import { shallow, useOther, useOthersConnectionIds } from "@liveblocks/react/suspense"
 import { useReactFlow } from "@xyflow/react"
+import { Loader2 } from "lucide-react"
 
 export function LiveCursors() {
   const ids = useOthersConnectionIds()
@@ -24,6 +25,7 @@ function ParticipantCursor({ connectionId }: { connectionId: number }) {
     (user) => ({
       id: user.id,
       cursor: user.presence.cursor,
+      thinking: user.presence.thinking,
       name: user.info.name,
       color: user.info.color,
     }),
@@ -36,6 +38,7 @@ function ParticipantCursor({ connectionId }: { connectionId: number }) {
 
   const { x, y } = flowToScreenPosition(other.cursor)
   const name = other.name.trim() || "Anonymous"
+  const isThinking = other.thinking === true
 
   return (
     <div
@@ -44,10 +47,16 @@ function ParticipantCursor({ connectionId }: { connectionId: number }) {
     >
       <CursorPointer color={other.color} />
       <div
-        className="absolute top-4 left-3 max-w-40 truncate rounded-md px-1.5 py-0.5 text-[11px] leading-tight font-medium"
+        className="absolute top-4 left-3 flex max-w-44 items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[11px] leading-tight font-medium"
         style={{ backgroundColor: other.color, color: "var(--bg-base)" }}
       >
-        {name}
+        {isThinking ? (
+          <Loader2
+            className="h-3 w-3 shrink-0 animate-spin"
+            aria-label="Thinking"
+          />
+        ) : null}
+        <span className="min-w-0 truncate">{name}</span>
       </div>
     </div>
   )

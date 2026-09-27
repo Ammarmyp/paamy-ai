@@ -43,6 +43,27 @@ declare global {
       // title: string;
       // url: string;
     }
+
+    // Feed payloads: ai-status-feed and ai-chat use different shapes
+    FeedMessageData:
+      | {
+          status: "start" | "processing" | "complete" | "error"
+          label: string
+          text?: string
+          runId?: string
+          prompt?: string
+          error?: string
+        }
+      | {
+          sender: string
+          role: "user" | "assistant"
+          content: string
+          timestamp: number
+        }
+
+    FeedMetadata: {
+      kind?: string
+    }
   }
 }
 
