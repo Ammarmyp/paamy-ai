@@ -19,8 +19,9 @@ import {
   useSelf,
 } from "@liveblocks/react"
 import { useRealtimeRun } from "@trigger.dev/react-hooks"
-import { Bot, Download, FileText, Loader2, Send, X } from "lucide-react"
+import { Bot, Loader2, Send, X } from "lucide-react"
 
+import { SpecsTab } from "@/components/editor/specs-tab"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -132,7 +133,10 @@ export function AiSidebar({
           keepMounted
           className="mt-3 flex min-h-0 flex-1 flex-col"
         >
-          <SpecsTab />
+          <SpecsTab
+            projectId={roomId}
+            enableGeneration={enableSharedStatus && Boolean(roomId)}
+          />
         </TabsContent>
       </Tabs>
     </aside>
@@ -752,38 +756,4 @@ function readErrorMessage(data: unknown): string | null {
   return typeof error === "string" && error.trim().length > 0
     ? error.trim()
     : null
-}
-
-function SpecsTab() {
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 pb-3">
-      <Button type="button" className="w-full">
-        Generate Spec
-      </Button>
-
-      <article className="flex flex-col gap-3 rounded-2xl border border-surface-border bg-elevated p-3">
-        <div className="flex items-start gap-2">
-          <FileText className="mt-0.5 h-4 w-4 shrink-0 text-ai-text" />
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-medium text-copy-primary">
-              Architecture Specification
-            </h3>
-            <p className="mt-1 text-xs leading-relaxed text-copy-muted">
-              Markdown overview of services, data stores, and request flow
-              derived from the current canvas graph.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            disabled
-            aria-label="Download spec"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
-      </article>
-    </div>
-  )
 }
