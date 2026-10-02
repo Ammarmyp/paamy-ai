@@ -48,6 +48,18 @@
       "sourceType": "github",
       "skillPath": "skills/liveblocks-best-practices/SKILL.md",
       "computedHash": "df4f54f66e81c580d25c5fee989768368837df694ab63c0f4a0fd70500cd16af"
+    },
+    "migrate-radix-to-base": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/migrate-radix-to-base/SKILL.md",
+      "computedHash": "4fdc31bf287f674ba6bf91a648120f7b34cd7ef370f998f2cc116fed067789c5"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "d04e43ec01e921558b93bb8046c14a42a22556689a2827243df900825a4e1604"
     }
   }
 }

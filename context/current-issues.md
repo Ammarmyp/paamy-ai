@@ -1,17 +1,7 @@
-# Current Issues
+## Current Issues
 
-_No open issues._
+- The canvas is still not fullly themed. the nodes are only tuned for dark. they need to adapt to the active theme. so do the other aspects.
 
-## Resolved
+- This app will be monothromatics (Except for the color full things the user can design on the canvase) therefore remove the primary blue or aqua like color and let us just go with the foreground and background as the default colors. 
 
-### 2026-09-27 — `/editor/[roomId]` load errors
-
-1. **Postgres SSL warning** — `DATABASE_URL` used `sslmode=require`, which `pg`
-   treats as `verify-full` and warns about. Fixed by normalizing the URL to
-   `sslmode=verify-full` in `src/lib/database-url.ts` (wired from `db.ts` and
-   `prisma.config.ts`).
-
-2. **`Feed ai-chat already exists`** — sidebar called `createFeed` on mount
-   without awaiting the Promise, so an existing feed became an unhandled
-   rejection. Fixed by creating the feed lazily on first send (await + catch),
-   matching Liveblocks’ ensure-feed pattern.
+- the color design systme should also apply for the right sidebar for the AI workspace as well. 

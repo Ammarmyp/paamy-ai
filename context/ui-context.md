@@ -2,31 +2,39 @@
 
 ## Theme
 
-Dark only. No light mode. The visual language is a dark technical workspace — near-black backgrounds, layered surfaces, and vivid accent colors for interactive elements.
+Light and dark modes, with a system preference option. Theme class is managed by `next-themes` (`attribute="class"`) via `ThemeProvider` in the root layout. Default is `system`.
 
-All colors are defined as CSS custom properties in `globals.css` and mapped to Tailwind tokens via `@theme inline`. Components must use these tokens — no hardcoded hex values or raw Tailwind color classes like `zinc-*`.
+Semantic shadcn tokens live in `:root` (light) and `.dark` (dark), applied from the tweakcn theme (`pnpm dlx shadcn@latest add https://tweakcn.com/r/themes/cmurc89pw000004js6cl538w3`). Project surface/text tokens mirror the active mode so utilities like `bg-surface` and `text-copy-primary` follow the toggle.
 
-| Role             | CSS Variable           | Hex / Value               |
-| ---------------- | ---------------------- | ------------------------- |
-| Page background  | `--bg-base`            | `#080809`                 |
-| Surface          | `--bg-surface`         | `#111114`                 |
-| Elevated surface | `--bg-elevated`        | `#18181c`                 |
-| Subtle surface   | `--bg-subtle`          | `#1e1e23`                 |
-| Default border   | `--border-default`     | `#2a2a30`                 |
-| Subtle border    | `--border-subtle`      | `#3a3a42`                 |
-| Primary text     | `--text-primary`       | `#f0f0f4`                 |
-| Secondary text   | `--text-secondary`     | `#c0c0cc`                 |
-| Muted text       | `--text-muted`         | `#808090`                 |
-| Faint text       | `--text-faint`         | `#505060`                 |
-| Brand accent     | `--accent-primary`     | `#00c8d4` (cyan)          |
-| Brand dim        | `--accent-primary-dim` | `rgba(0, 200, 212, 0.12)` |
-| AI accent        | `--accent-ai`          | `#6457f9` (indigo-purple) |
-| AI text          | `--accent-ai-text`     | `#8b82ff`                 |
-| Error            | `--state-error`        | `#ff4d4f`                 |
-| Success          | `--state-success`      | `#34d399`                 |
-| Warning          | `--state-warning`      | `#fbbf24`                 |
+All colors are defined as CSS custom properties in `globals.css` and mapped to Tailwind tokens via `@theme inline`. Prefer semantic tokens (`bg-background`, `text-muted-foreground`) for new UI; existing project tokens remain supported. No hardcoded hex values or raw Tailwind color classes like `zinc-*` in components.
+
+### Project tokens (mode-aware)
+
+| Role             | CSS Variable           | Light                         | Dark                          |
+| ---------------- | ---------------------- | ----------------------------- | ----------------------------- |
+| Page background  | `--bg-base`            | `oklch(1 0 0)`                | `#080809`                     |
+| Surface          | `--bg-surface`         | `oklch(0.985 0 0)`            | `#111114`                     |
+| Elevated surface | `--bg-elevated`        | `oklch(1 0 0)`                | `#18181c`                     |
+| Subtle surface   | `--bg-subtle`          | `oklch(0.97 0 0)`             | `#1e1e23`                     |
+| Default border   | `--border-default`     | `oklch(0.922 0 0)`            | `#2a2a30`                     |
+| Subtle border    | `--border-subtle`      | `oklch(0.87 0 0)`             | `#3a3a42`                     |
+| Primary text     | `--text-primary`       | `oklch(0.145 0 0)`            | `#f0f0f4`                     |
+| Secondary text   | `--text-secondary`     | `oklch(0.371 0 0)`            | `#c0c0cc`                     |
+| Muted text       | `--text-muted`         | `oklch(0.556 0 0)`            | `#808090`                     |
+| Faint text       | `--text-faint`         | `oklch(0.708 0 0)`            | `#505060`                     |
+| Brand accent     | `--accent-primary`     | `#00c8d4` (cyan)              | same                          |
+| Brand dim        | `--accent-primary-dim` | `rgba(0, 200, 212, 0.12)`     | same                          |
+| AI accent        | `--accent-ai`          | `#6457f9` (indigo-purple)     | same                          |
+| AI text          | `--accent-ai-text`     | `#8b82ff`                     | same                          |
+| Error            | `--state-error`        | `#ff4d4f`                     | same                          |
+| Success          | `--state-success`      | `#34d399`                     | same                          |
+| Warning          | `--state-warning`      | `#fbbf24`                     | same                          |
 
 Tailwind utility names map to these variables. Use `bg-base`, `bg-surface`, `text-copy-primary`, `text-copy-muted`, `border-surface-border`, `text-brand`, `bg-accent-dim`, etc.
+
+### Theme toggle
+
+Reusable `ModeToggle` (`src/components/mode-toggle.tsx`) — dropdown icon menu with Light / Dark / System. Mounted on the editor navbar right actions for now; safe to reuse anywhere under `ThemeProvider`.
 
 ## Typography
 
@@ -39,7 +47,7 @@ Both fonts are loaded via `next/font/google` and applied as CSS variables on the
 
 ## Border Radius
 
-Radius increases with surface depth — smaller for inner elements, larger for outer containers.
+Radius increases with surface depth — smaller for inner elements, larger for outer containers. Base `--radius` comes from the active theme (currently `0.225rem`).
 
 | Context           | Class         |
 | ----------------- | ------------- |
@@ -96,9 +104,9 @@ shadcn/ui on top of Tailwind. No custom design system. Components live in `compo
 ## Layout Patterns
 
 - Editor workspace: full-viewport layout — floating sidebar overlay on the left, center canvas, slide-over AI sidebar on the right.
-- Sidebars: floating overlay with dark semi-transparent background and subtle border.
-- Modals and dialogs: centered overlay, `rounded-3xl`, dark background with backdrop blur.
-- Navbar: top bar with dark background and bottom border.
+- Sidebars: floating overlay with mode-aware surface background and subtle border.
+- Modals and dialogs: centered overlay, `rounded-3xl`, mode-aware background with backdrop blur.
+- Navbar: top bar with mode-aware background and bottom border; theme toggle sits with right-side actions.
 
 ## Icons
 
