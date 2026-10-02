@@ -596,10 +596,10 @@ function SpecsTabPanel({
                 onKeyDown={(event) => handleListItemKeyDown(event, spec)}
                 className={cn(
                   "flex cursor-pointer items-center gap-2 rounded-xl border border-surface-border bg-elevated px-2.5 py-2",
-                  "outline-none transition-colors hover:border-border-subtle focus-visible:ring-2 focus-visible:ring-brand/40",
+                  "outline-none transition-colors hover:border-border-subtle focus-visible:ring-2 focus-visible:ring-foreground/40",
                 )}
               >
-                <FileText className="h-3.5 w-3.5 shrink-0 text-ai-text" />
+                <FileText className="h-3.5 w-3.5 shrink-0 text-copy-secondary" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium text-copy-primary">
                     {spec.filename}
@@ -708,7 +708,7 @@ function SpecsTabPanel({
                       )
                     }
                     return (
-                      <code className="rounded-md bg-subtle px-1 py-0.5 font-mono text-[11px] text-brand">
+                      <code className="rounded-md bg-subtle px-1 py-0.5 font-mono text-[11px] text-copy-primary">
                         {children}
                       </code>
                     )
@@ -721,7 +721,7 @@ function SpecsTabPanel({
                   a: ({ href, children }) => (
                     <a
                       href={href}
-                      className="text-brand underline underline-offset-2"
+                      className="text-copy-primary underline underline-offset-2"
                       target="_blank"
                       rel="noopener noreferrer"
                     >

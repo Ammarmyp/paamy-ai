@@ -15,6 +15,7 @@ import { NodeShapeVisual } from "@/components/editor/node-shape-visual"
 import {
   DEFAULT_NODE_COLOR,
   NODE_SHAPES,
+  resolveNodePaint,
   SHAPE_DEFAULT_SIZES,
   SHAPE_DRAG_MIME,
   type NodeShape,
@@ -130,24 +131,32 @@ export function ShapePanel() {
       </div>
 
       {preview ? (
-        <div
-          className="pointer-events-none fixed z-50 opacity-60"
-          style={{
-            left: preview.x - preview.width / 2,
-            top: preview.y - preview.height / 2,
-          }}
-          aria-hidden
-        >
-          <NodeShapeVisual
-            shape={preview.shape}
-            width={preview.width}
-            height={preview.height}
-            fill={DEFAULT_NODE_COLOR.fill}
-            textColor={DEFAULT_NODE_COLOR.text}
-          />
-        </div>
+        <ShapeDragGhost preview={preview} />
       ) : null}
     </>
+  )
+}
+
+function ShapeDragGhost({ preview }: { preview: ShapeDragPreview }) {
+  const paint = resolveNodePaint(DEFAULT_NODE_COLOR.fill)
+
+  return (
+    <div
+      className="pointer-events-none fixed z-50 opacity-60"
+      style={{
+        left: preview.x - preview.width / 2,
+        top: preview.y - preview.height / 2,
+      }}
+      aria-hidden
+    >
+      <NodeShapeVisual
+        shape={preview.shape}
+        width={preview.width}
+        height={preview.height}
+        fill={paint.fill}
+        textColor={paint.text}
+      />
+    </div>
   )
 }
 

@@ -1,8 +1,6 @@
 import { Liveblocks } from "@liveblocks/node"
 
 const CURSOR_COLORS = [
-  "#00c8d4",
-  "#6457f9",
   "#52A8FF",
   "#BF7AF0",
   "#FF990A",
@@ -11,6 +9,8 @@ const CURSOR_COLORS = [
   "#62C073",
   "#0AC7B4",
   "#fbbf24",
+  "#A1A1AA",
+  "#EDEDED",
 ] as const
 
 function createLiveblocksClient() {

@@ -4,9 +4,11 @@
 
 Light and dark modes, with a system preference option. Theme class is managed by `next-themes` (`attribute="class"`) via `ThemeProvider` in the root layout. Default is `system`.
 
-Semantic shadcn tokens live in `:root` (light) and `.dark` (dark), applied from the tweakcn theme (`pnpm dlx shadcn@latest add https://tweakcn.com/r/themes/cmurc89pw000004js6cl538w3`). Project surface/text tokens mirror the active mode so utilities like `bg-surface` and `text-copy-primary` follow the toggle.
+The chrome is monochromatic: foreground / background / muted surfaces only. Brand cyan and AI purple accents are removed — `--accent-primary` / `--accent-ai*` alias to text tokens for backward-compatible utilities (`text-brand`, `text-ai-text`). Colorful UI is reserved for canvas design (node color palette, collaborator cursors).
 
-All colors are defined as CSS custom properties in `globals.css` and mapped to Tailwind tokens via `@theme inline`. Prefer semantic tokens (`bg-background`, `text-muted-foreground`) for new UI; existing project tokens remain supported. No hardcoded hex values or raw Tailwind color classes like `zinc-*` in components.
+Semantic shadcn tokens live in `:root` (light) and `.dark` (dark), applied from the tweakcn theme. Project surface/text tokens mirror the active mode so utilities like `bg-surface` and `text-copy-primary` follow the toggle.
+
+All colors are defined as CSS custom properties in `globals.css` and mapped to Tailwind tokens via `@theme inline`. Prefer semantic tokens (`bg-background`, `text-foreground`, `bg-muted`) for new UI. No hardcoded brand hex or raw Tailwind color classes like `zinc-*` in chrome components.
 
 ### Project tokens (mode-aware)
 
@@ -22,15 +24,14 @@ All colors are defined as CSS custom properties in `globals.css` and mapped to T
 | Secondary text   | `--text-secondary`     | `oklch(0.371 0 0)`            | `#c0c0cc`                     |
 | Muted text       | `--text-muted`         | `oklch(0.556 0 0)`            | `#808090`                     |
 | Faint text       | `--text-faint`         | `oklch(0.708 0 0)`            | `#505060`                     |
-| Brand accent     | `--accent-primary`     | `#00c8d4` (cyan)              | same                          |
-| Brand dim        | `--accent-primary-dim` | `rgba(0, 200, 212, 0.12)`     | same                          |
-| AI accent        | `--accent-ai`          | `#6457f9` (indigo-purple)     | same                          |
-| AI text          | `--accent-ai-text`     | `#8b82ff`                     | same                          |
+| Brand / AI (mono)| `--accent-primary` etc | aliases of text tokens        | same                          |
+| Neutral node     | `--node-neutral-*`     | light surface / dark text     | `#1f1f1f` / `#ededed`         |
+| Canvas edge      | `--canvas-edge`        | mid gray                      | `#f8fafc`                     |
 | Error            | `--state-error`        | `#ff4d4f`                     | same                          |
 | Success          | `--state-success`      | `#34d399`                     | same                          |
 | Warning          | `--state-warning`      | `#fbbf24`                     | same                          |
 
-Tailwind utility names map to these variables. Use `bg-base`, `bg-surface`, `text-copy-primary`, `text-copy-muted`, `border-surface-border`, `text-brand`, `bg-accent-dim`, etc.
+Tailwind utility names map to these variables. Use `bg-base`, `bg-surface`, `text-copy-primary`, `text-copy-muted`, `border-surface-border`, `bg-foreground`, `text-background`, etc.
 
 ### Theme toggle
 
@@ -59,24 +60,24 @@ Radius increases with surface depth — smaller for inner elements, larger for o
 
 ### Node Color Palette
 
-8 defined color pairs. Each pair specifies a dark node fill and a vivid contrasting text color tuned for readability on the dark canvas. Defined in `types/canvas.ts` as `NODE_COLORS`.
+8 defined color pairs in `types/canvas.ts` as `NODE_COLORS`. The default/neutral entry (`#1F1F1F` storage key) paints via `--node-neutral-fill` / `--node-neutral-text` so it follows light/dark. The other seven are fixed vivid design colors the user can apply — they do not change with theme.
 
-| Node fill | Text color | Character              |
-| --------- | ---------- | ---------------------- |
-| `#1F1F1F` | `#EDEDED`  | Neutral dark (default) |
-| `#10233D` | `#52A8FF`  | Blue                   |
-| `#2E1938` | `#BF7AF0`  | Purple                 |
-| `#331B00` | `#FF990A`  | Orange                 |
-| `#3C1618` | `#FF6166`  | Red                    |
-| `#3A1726` | `#F75F8F`  | Pink                   |
-| `#0F2E18` | `#62C073`  | Green                  |
-| `#062822` | `#0AC7B4`  | Teal                   |
+| Node fill (stored) | Text color | Character              |
+| ------------------ | ---------- | ---------------------- |
+| `#1F1F1F` (neutral)| theme CSS  | Default / neutral      |
+| `#10233D`          | `#52A8FF`  | Blue                   |
+| `#2E1938`          | `#BF7AF0`  | Purple                 |
+| `#331B00`          | `#FF990A`  | Orange                 |
+| `#3C1618`          | `#FF6166`  | Red                    |
+| `#3A1726`          | `#F75F8F`  | Pink                   |
+| `#0F2E18`          | `#62C073`  | Green                  |
+| `#062822`          | `#0AC7B4`  | Teal                   |
 
-Default node color: `#1F1F1F` with `#EDEDED` text.
+Use `resolveNodePaint(fill)` when rendering. Default stored color: `#1F1F1F`.
 
 ### Edge Style
 
-Smooth-step path with an arrow marker. Default edge color: `#f8fafc`. Stroke width is thin — edges are visually secondary to nodes.
+Smooth-step path with an arrow marker. Stroke uses `--canvas-edge` (theme-aware). Stroke width is thin — edges are visually secondary to nodes.
 
 ### Node Shapes
 
@@ -91,11 +92,11 @@ Smooth-step path with an arrow marker. Default edge color: `#f8fafc`. Stroke wid
 
 ### Connection Handles
 
-Small white circular handles, hidden by default, revealed on node hover. Appear at all four sides of a node.
+Small circular handles using `bg-foreground` / `border-background`, hidden by default, revealed on node hover. Appear at all four sides of a node.
 
 ### Canvas Background
 
-React Flow `<Background>` component. Canvas sits on the base background color.
+React Flow `<Background>` component. Canvas sits on `bg-base`; dots use `--border-default`.
 
 ## Component Library
 
@@ -104,7 +105,7 @@ shadcn/ui on top of Tailwind. No custom design system. Components live in `compo
 ## Layout Patterns
 
 - Editor workspace: full-viewport layout — floating sidebar overlay on the left, center canvas, slide-over AI sidebar on the right.
-- Sidebars: floating overlay with mode-aware surface background and subtle border.
+- Sidebars (projects + AI): floating overlay with mode-aware surface background and subtle border; AI workspace uses the same monochrome tokens (foreground send/user bubbles, muted empty states) — no green or purple accents.
 - Modals and dialogs: centered overlay, `rounded-3xl`, mode-aware background with backdrop blur.
 - Navbar: top bar with mode-aware background and bottom border; theme toggle sits with right-side actions.
 

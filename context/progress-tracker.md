@@ -222,6 +222,10 @@ Update this file whenever the current phase, active feature, or implementation s
   - `src/components/mode-toggle.tsx` — reusable dropdown (Light / Dark / System) via shadcn `DropdownMenu` + radio group; mounted on editor navbar right actions
   - `dropdown-menu` shadcn component added; `ui-context.md` updated for multi-theme
   - `tsc --noEmit` clean; eslint clean on new files
+- Monochrome + canvas theme follow-up (`context/current-issues.md`)
+  - Brand cyan / AI purple removed; chrome uses foreground/background/muted; AI sidebar send/user bubbles monochrome
+  - Default/neutral canvas nodes, edges (`--canvas-edge`), and handles are theme-aware; vivid `NODE_COLORS` unchanged for user design
+  - `resolveNodePaint()` for render-time neutral resolution; specs/project sidebar accents aligned
 
 ## In Progress
 
@@ -234,12 +238,12 @@ Update this file whenever the current phase, active feature, or implementation s
 ## Open Questions
 
 - Clerk appearance still forces `theme: dark`; decide whether auth UI should follow the app light/dark toggle
-- Canvas node palette remains dark-tuned; light-mode canvas contrast may need a follow-up
 
 ## Architecture Decisions
 
 - shadcn preset: `base-nova` (Radix via `@base-ui/react`), CSS variables, lucide icons
 - Theme: `next-themes` class strategy; tweakcn semantic tokens in `:root` (light) / `.dark` (dark); project tokens (`--bg-*`, `--text-*`) mirror the active mode; `ModeToggle` dropdown for light/dark/system
+- Chrome is monochromatic (foreground/background/muted); brand cyan and AI purple removed — colorful UI reserved for canvas node palette and collaborator cursors; default/neutral nodes + edges + handles follow theme via CSS vars
 - Editor sidebars float as overlays (translate in/out); they must not push canvas layout
 - Auth: protected-first via `src/proxy.ts` (`clerkMiddleware`); public routes from Clerk sign-in/sign-up env vars; Clerk `dark` theme with monochromatic CSS-variable appearance (no hardcoded colors)
 - Auth layout: 50/50 on large screens; left panel uses brand → headline → supporting → features hierarchy; right panel uses token-based grid/map backdrop + bordered form card with Sign In / Sign Up tabs

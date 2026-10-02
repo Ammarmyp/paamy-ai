@@ -138,14 +138,14 @@ function ProjectList({
             <div
               className={cn(
                 "flex items-center gap-1 rounded-xl px-2 py-1.5 hover:bg-subtle",
-                isActive && "bg-accent-dim",
+                isActive && "bg-muted",
               )}
             >
               <Link
                 href={`/editor/${project.id}`}
                 className={cn(
-                  "min-w-0 flex-1 truncate text-sm text-copy-primary",
-                  isActive && "text-brand",
+                  "min-w-0 flex-1 truncate text-sm text-copy-secondary",
+                  isActive && "font-medium text-copy-primary",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >

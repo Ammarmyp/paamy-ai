@@ -112,10 +112,14 @@
   --text-secondary: oklch(0.371 0 0);
   --text-muted: oklch(0.556 0 0);
   --text-faint: oklch(0.708 0 0);
-  --accent-primary: #00c8d4;
-  --accent-primary-dim: rgba(0, 200, 212, 0.12);
-  --accent-ai: #6457f9;
-  --accent-ai-text: #8b82ff;
+  /* Monochrome chrome — aliases for legacy brand/ai utilities */
+  --accent-primary: var(--text-primary);
+  --accent-primary-dim: color-mix(in oklch, var(--text-primary) 12%, transparent);
+  --accent-ai: var(--text-primary);
+  --accent-ai-text: var(--text-secondary);
+  --node-neutral-fill: oklch(0.97 0 0);
+  --node-neutral-text: oklch(0.145 0 0);
+  --canvas-edge: oklch(0.45 0 0);
   --state-error: #ff4d4f;
   --state-success: #34d399;
   --state-warning: #fbbf24;
@@ -187,10 +191,13 @@
   --text-secondary: #c0c0cc;
   --text-muted: #808090;
   --text-faint: #505060;
-  --accent-primary: #00c8d4;
-  --accent-primary-dim: rgba(0, 200, 212, 0.12);
-  --accent-ai: #6457f9;
-  --accent-ai-text: #8b82ff;
+  --accent-primary: var(--text-primary);
+  --accent-primary-dim: color-mix(in oklch, var(--text-primary) 12%, transparent);
+  --accent-ai: var(--text-primary);
+  --accent-ai-text: var(--text-secondary);
+  --node-neutral-fill: #1f1f1f;
+  --node-neutral-text: #ededed;
+  --canvas-edge: #f8fafc;
   --state-error: #ff4d4f;
   --state-success: #34d399;
   --state-warning: #fbbf24;

@@ -5,7 +5,6 @@ import {
   useEffectEvent,
   useRef,
   useState,
-  type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
   type ReactNode,
@@ -40,17 +39,13 @@ import {
 } from "@/types/tasks"
 
 const TAB_TRIGGER_CLASS =
-  "text-copy-muted data-active:bg-accent data-active:text-brand dark:data-active:border-transparent dark:data-active:bg-accent dark:data-active:text-brand"
+  "text-copy-muted data-active:bg-muted data-active:text-copy-primary dark:data-active:border-transparent"
 
 const STARTER_PROMPTS = [
   "Design an e-commerce backend",
   "Create a chat app architecture",
   "Build a CI/CD pipeline",
 ] as const
-
-/** Canvas green accent — same as NODE_COLORS green text. */
-const GREEN_ACCENT = "#62C073"
-const GREEN_ACCENT_TEXT = "#0F2E18"
 
 interface AiSidebarProps {
   isOpen: boolean
@@ -85,7 +80,7 @@ export function AiSidebar({
     >
       <header className="flex shrink-0 items-start justify-between gap-2 border-b border-surface-border px-4 py-3">
         <div className="flex min-w-0 items-start gap-2">
-          <Bot className="mt-0.5 h-4 w-4 shrink-0 text-ai-text" />
+          <Bot className="mt-0.5 h-4 w-4 shrink-0 text-copy-secondary" />
           <div className="min-w-0">
             <h2 className="text-sm font-medium text-copy-primary">
               AI Workspace
@@ -583,17 +578,9 @@ function ArchitectChatLayout({
             type="submit"
             disabled={!canSend}
             className={cn(
-              "border-transparent",
-              canSend
-                ? "hover:opacity-90"
-                : "opacity-40 text-copy-muted",
+              "border-transparent bg-foreground text-background",
+              canSend ? "hover:opacity-90" : "opacity-40",
             )}
-            style={
-              {
-                backgroundColor: GREEN_ACCENT,
-                color: canSend ? GREEN_ACCENT_TEXT : undefined,
-              } satisfies CSSProperties
-            }
           >
             {isBusy ? (
               <Loader2
@@ -623,13 +610,10 @@ function RunStatusStrip({ text }: { text: string }) {
         aria-hidden
       >
         <span
-          className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
-          style={{ backgroundColor: GREEN_ACCENT }}
+          className="absolute inline-flex h-full w-full animate-ping rounded-full bg-foreground opacity-60"
+          aria-hidden
         />
-        <span
-          className="relative inline-flex h-2 w-2 rounded-full"
-          style={{ backgroundColor: GREEN_ACCENT }}
-        />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-foreground" />
       </span>
       <p className="min-w-0 truncate text-xs text-copy-secondary">{text}</p>
     </div>
@@ -645,7 +629,7 @@ function EmptyArchitectState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 px-2 py-8 text-center">
-      <Bot className="h-8 w-8 text-ai-text" />
+      <Bot className="h-8 w-8 text-copy-muted" />
       <p className="text-sm text-copy-muted">
         Describe a system in plain English. Ghost AI will sketch it on the
         canvas.
@@ -658,7 +642,7 @@ function EmptyArchitectState({
             variant="ghost"
             disabled={disabled}
             onClick={() => onSelectPrompt(prompt)}
-            className="h-auto rounded-full bg-subtle px-3 py-1.5 text-xs text-ai-text hover:bg-subtle hover:text-ai-text"
+            className="h-auto rounded-full bg-subtle px-3 py-1.5 text-xs text-copy-secondary hover:bg-subtle hover:text-copy-primary"
           >
             {prompt}
           </Button>
@@ -684,14 +668,9 @@ function ChatBubble({
       className={cn(
         "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
         isUser
-          ? "ml-auto"
+          ? "ml-auto bg-foreground text-background"
           : "mr-auto border border-surface-border bg-elevated text-copy-primary",
       )}
-      style={
-        isUser
-          ? { backgroundColor: GREEN_ACCENT, color: GREEN_ACCENT_TEXT }
-          : undefined
-      }
     >
       {showMeta && sender ? (
         <div className="mb-1 flex items-baseline justify-between gap-2">
