@@ -11,6 +11,7 @@ import {
   Share2,
 } from "lucide-react"
 
+import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
 import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave"
 import { cn } from "@/lib/utils"
@@ -143,6 +144,7 @@ export function EditorNavbar({
             </Button>
           </>
         ) : null}
+        <ModeToggle />
         {showUserButton ? <UserButton /> : null}
       </div>
     </header>

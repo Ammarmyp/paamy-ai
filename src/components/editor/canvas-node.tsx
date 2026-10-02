@@ -20,8 +20,7 @@ import { NodeColorToolbar } from "@/components/editor/node-color-toolbar"
 import { NodeShapeVisual } from "@/components/editor/node-shape-visual"
 import { cn } from "@/lib/utils"
 import {
-  DEFAULT_NODE_COLOR,
-  NODE_COLORS,
+  resolveNodePaint,
   type CanvasNode,
   type NodeColor,
 } from "@/types/canvas"
@@ -31,7 +30,7 @@ const MIN_NODE_HEIGHT = 48
 const LABEL_PLACEHOLDER = "Label"
 
 const HANDLE_BASE_CLASS =
-  "!h-2 !w-2 !min-h-0 !min-w-0 !rounded-full !border !border-base !bg-white transition-opacity duration-150"
+  "!h-2 !w-2 !min-h-0 !min-w-0 !rounded-full !border !border-background !bg-foreground transition-opacity duration-150"
 
 export function CanvasNodeComponent({
   id,
@@ -46,8 +45,7 @@ export function CanvasNodeComponent({
 
   const nodeWidth = width ?? 180
   const nodeHeight = height ?? 100
-  const palette =
-    NODE_COLORS.find((entry) => entry.fill === data.color) ?? DEFAULT_NODE_COLOR
+  const palette = resolveNodePaint(data.color)
 
   useEffect(() => {
     if (!isEditing) {
@@ -103,7 +101,7 @@ export function CanvasNodeComponent({
     >
       {selected ? (
         <NodeColorToolbar
-          activeFill={palette.fill}
+          activeFill={data.color}
           onSelect={handleColorSelect}
         />
       ) : null}

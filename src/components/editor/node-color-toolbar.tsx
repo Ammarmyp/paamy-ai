@@ -3,7 +3,11 @@
 import type { CSSProperties, MouseEvent } from "react"
 
 import { cn } from "@/lib/utils"
-import { NODE_COLORS, type NodeColor } from "@/types/canvas"
+import {
+  NEUTRAL_NODE_FILL,
+  NODE_COLORS,
+  type NodeColor,
+} from "@/types/canvas"
 
 interface NodeColorToolbarProps {
   activeFill: string
@@ -45,8 +49,14 @@ export function NodeColorToolbar({
             )}
             style={
               {
-                backgroundColor: entry.fill,
-                "--swatch-glow": entry.text,
+                backgroundColor:
+                  entry.fill === NEUTRAL_NODE_FILL
+                    ? "var(--node-neutral-fill)"
+                    : entry.fill,
+                "--swatch-glow":
+                  entry.fill === NEUTRAL_NODE_FILL
+                    ? "var(--node-neutral-text)"
+                    : entry.text,
               } as CSSProperties
             }
             onClick={() => onSelect(entry)}

@@ -4,7 +4,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Spec generation frontend wiring — complete
+- App UI/UX redesign (theme + mode toggle) — complete
 
 ## Current Goal
 
@@ -215,6 +215,17 @@ Update this file whenever the current phase, active feature, or implementation s
   - Specs tab Generate Spec: snapshots canvas + `ai-chat` history → `POST /api/ai/spec` → `POST /api/ai/spec/token` → `useRealtimeRun`; refreshes list on success; button spinner + status/error
   - Generate disabled outside a project room (editor home)
   - `pnpm run build` passes
+- `context/feature-specs/30-app-ui-ux-redesign.md`
+  - Applied tweakcn theme via `pnpm dlx shadcn@latest add https://tweakcn.com/r/themes/cmurc89pw000004js6cl538w3` (light `:root` + dark `.dark` semantic tokens in `globals.css`)
+  - Project surface/text tokens are mode-aware; brand/AI/state accents unchanged across modes
+  - `next-themes` installed; `src/components/theme-provider.tsx` wraps root layout (`attribute="class"`, `defaultTheme="system"`, `enableSystem`, `suppressHydrationWarning`)
+  - `src/components/mode-toggle.tsx` — reusable dropdown (Light / Dark / System) via shadcn `DropdownMenu` + radio group; mounted on editor navbar right actions
+  - `dropdown-menu` shadcn component added; `ui-context.md` updated for multi-theme
+  - `tsc --noEmit` clean; eslint clean on new files
+- Monochrome + canvas theme follow-up (`context/current-issues.md`)
+  - Brand cyan / AI purple removed; chrome uses foreground/background/muted; AI sidebar send/user bubbles monochrome
+  - Default/neutral canvas nodes, edges (`--canvas-edge`), and handles are theme-aware; vivid `NODE_COLORS` unchanged for user design
+  - `resolveNodePaint()` for render-time neutral resolution; specs/project sidebar accents aligned
 
 ## In Progress
 
@@ -226,12 +237,13 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Open Questions
 
-- Add unresolved product or implementation questions here.
+- Clerk appearance still forces `theme: dark`; decide whether auth UI should follow the app light/dark toggle
 
 ## Architecture Decisions
 
 - shadcn preset: `base-nova` (Radix via `@base-ui/react`), CSS variables, lucide icons
-- Dark-only: project tokens from `ui-context.md` live in `:root`; shadcn semantic vars map onto them; `html` has `class="dark"` for `dark:` variants
+- Theme: `next-themes` class strategy; tweakcn semantic tokens in `:root` (light) / `.dark` (dark); project tokens (`--bg-*`, `--text-*`) mirror the active mode; `ModeToggle` dropdown for light/dark/system
+- Chrome is monochromatic (foreground/background/muted); brand cyan and AI purple removed — colorful UI reserved for canvas node palette and collaborator cursors; default/neutral nodes + edges + handles follow theme via CSS vars
 - Editor sidebars float as overlays (translate in/out); they must not push canvas layout
 - Auth: protected-first via `src/proxy.ts` (`clerkMiddleware`); public routes from Clerk sign-in/sign-up env vars; Clerk `dark` theme with monochromatic CSS-variable appearance (no hardcoded colors)
 - Auth layout: 50/50 on large screens; left panel uses brand → headline → supporting → features hierarchy; right panel uses token-based grid/map backdrop + bordered form card with Sign In / Sign Up tabs

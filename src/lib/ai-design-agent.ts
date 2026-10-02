@@ -22,7 +22,7 @@ import {
 
 export const AI_AGENT_USER_ID = "ghost-ai"
 export { AI_STATUS_FEED_ID }
-export const AI_AGENT_COLOR = "#6457f9"
+export const AI_AGENT_COLOR = "#A1A1AA"
 export const AI_AGENT_NAME = "Ghost AI"
 
 export type { AiStatusPhase }

@@ -1,11 +1,18 @@
 import type { Edge, Node } from "@xyflow/react"
 
 /**
- * Node fill + contrasting text color pairs for the dark canvas.
- * Defined in ui-context.md.
+ * Stored fill key for the theme-aware default/neutral node.
+ * Rendered via `--node-neutral-fill` / `--node-neutral-text`.
+ */
+export const NEUTRAL_NODE_FILL = "#1F1F1F"
+
+/**
+ * Node fill + contrasting text color pairs for the canvas color picker.
+ * The first (neutral) entry adapts to light/dark at render time; the rest
+ * are intentional design colors the user can apply on the canvas.
  */
 export const NODE_COLORS = [
-  { fill: "#1F1F1F", text: "#EDEDED" },
+  { fill: NEUTRAL_NODE_FILL, text: "#EDEDED" },
   { fill: "#10233D", text: "#52A8FF" },
   { fill: "#2E1938", text: "#BF7AF0" },
   { fill: "#331B00", text: "#FF990A" },
@@ -18,6 +25,26 @@ export const NODE_COLORS = [
 export type NodeColor = (typeof NODE_COLORS)[number]
 
 export const DEFAULT_NODE_COLOR: NodeColor = NODE_COLORS[0]
+
+/** Resolve a stored fill to paint colors (neutral follows active theme). */
+export function resolveNodePaint(fill: string): { fill: string; text: string } {
+  if (fill === NEUTRAL_NODE_FILL) {
+    return {
+      fill: "var(--node-neutral-fill)",
+      text: "var(--node-neutral-text)",
+    }
+  }
+
+  const match = NODE_COLORS.find((entry) => entry.fill === fill)
+  if (match) {
+    return { fill: match.fill, text: match.text }
+  }
+
+  return {
+    fill: "var(--node-neutral-fill)",
+    text: "var(--node-neutral-text)",
+  }
+}
 
 /**
  * Supported canvas node shapes (ui-context.md).
@@ -35,7 +62,8 @@ export type NodeShape = (typeof NODE_SHAPES)[number]
 
 export const DEFAULT_NODE_SHAPE: NodeShape = "rectangle"
 
-export const DEFAULT_EDGE_COLOR = "#f8fafc"
+/** Theme-aware default edge stroke (see `--canvas-edge` in globals.css). */
+export const DEFAULT_EDGE_COLOR = "var(--canvas-edge)"
 
 /**
  * Default node dimensions per shape for drag-and-drop creation.

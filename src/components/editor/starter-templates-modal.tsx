@@ -10,7 +10,7 @@ import {
 import { NodeShapeVisual } from "@/components/editor/node-shape-visual"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { DEFAULT_EDGE_COLOR, DEFAULT_NODE_COLOR, NODE_COLORS } from "@/types/canvas"
+import { DEFAULT_EDGE_COLOR, resolveNodePaint } from "@/types/canvas"
 import { cn } from "@/lib/utils"
 
 const PREVIEW_WIDTH = 280
@@ -123,9 +123,7 @@ function TemplatePreview({ template }: { template: CanvasTemplate }) {
           layout.offsetX + (node.position.x - layout.bounds.minX) * layout.scale
         const top =
           layout.offsetY + (node.position.y - layout.bounds.minY) * layout.scale
-        const palette =
-          NODE_COLORS.find((entry) => entry.fill === node.data.color) ??
-          DEFAULT_NODE_COLOR
+        const palette = resolveNodePaint(node.data.color)
 
         return (
           <div
